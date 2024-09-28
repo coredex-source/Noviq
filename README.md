@@ -1,7 +1,7 @@
 # litecode
 Just a simple programming language based on python.
 
-#Here is the current syntax and available features -
+# Here is the current syntax and available features -
 
 display()
 - Syntax:
