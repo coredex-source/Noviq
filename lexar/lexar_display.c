@@ -14,6 +14,11 @@ void displayInt(int value) {
     printf("%d\n", value);
 }
 
+// Add this function
+void displayFloat(float value) {
+    printf("%f\n", value);
+}
+
 void displayFormatted(const char *format, char **vars, int varCount) {
     char output[1024] = "";
     
@@ -38,7 +43,13 @@ void displayFormatted(const char *format, char **vars, int varCount) {
                     char numStr[32];
                     sprintf(numStr, "%d", var->value.intValue);
                     strcat(output, numStr);
-                } else {
+                } else if (var->type == FLOAT) {
+                    char numStr[32];
+                    sprintf(numStr, "%.6f", var->value.floatValue);
+                    strcat(output, numStr);
+                } else if (var->type == BOOLEAN) {
+                    strcat(output, var->value.boolValue ? "true" : "false");
+                } else if (var->type == STRING) {
                     strcat(output, var->value.stringValue);
                 }
             } else {
@@ -81,7 +92,13 @@ char* createFormattedString(const char *format, char **vars, int varCount) {
                     char numStr[32];
                     sprintf(numStr, "%d", var->value.intValue);
                     strcat(output, numStr);
-                } else {
+                } else if (var->type == FLOAT) {
+                    char numStr[32];
+                    sprintf(numStr, "%.6f", var->value.floatValue);
+                    strcat(output, numStr);
+                } else if (var->type == BOOLEAN) {
+                    strcat(output, var->value.boolValue ? "true" : "false");
+                } else if (var->type == STRING) {
                     strcat(output, var->value.stringValue);
                 }
             } else {

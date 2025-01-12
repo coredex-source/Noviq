@@ -21,6 +21,12 @@ void executeFile(const char *filename) {
         if (line[read - 1] == '\n') {
             line[read - 1] = '\0';
         }
+        
+        // Skip empty lines or lines with only whitespace
+        char *trimmed = line;
+        while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
+        if (*trimmed == '\0') continue;
+
         interpretCommand(line, lineNumber);
     }
 

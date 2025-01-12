@@ -1,19 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>  // Add this for isdigit()
 #include "lexar_display.h"
+#include "lexar_interpret.h"
 
-typedef enum { INT, STRING } VarType;
-
-typedef struct {
-    char *name;
-    VarType type;
-    union {
-        int intValue;
-        char *stringValue;
-    } value;
-} Variable;
-
+// Remove duplicate type definitions since they're in lexar_interpret.h
 Variable *variables = NULL;
 size_t variableCount = 0;
 
@@ -32,10 +24,31 @@ void addVariable(const char *name, VarType type, void *value) {
     variables[variableCount].type = type;
     if (type == INT) {
         variables[variableCount].value.intValue = *(int *)value;
+    } else if (type == FLOAT) {
+        variables[variableCount].value.floatValue = *(float *)value;
+    } else if (type == BOOLEAN) {
+        variables[variableCount].value.boolValue = *(int *)value;
     } else {
         variables[variableCount].value.stringValue = strdup((char *)value);
     }
     variableCount++;
+}
+
+// Add helper functions for float parsing
+int isFloat(const char *str) {
+    int dots = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '.') {
+            dots++;
+        } else if (!isdigit(str[i]) && (i == 0 && str[i] != '-')) {
+            return 0;
+        }
+    }
+    return dots == 1;
+}
+
+float parseFloat(const char *str) {
+    return atof(str);
 }
 
 // Function to interpret and execute commands
@@ -69,6 +82,8 @@ void interpretCommand(const char *command, int lineNumber) {
                 long intValue = strtol(content, &endptr, 10);
                 if (*endptr == '\0') {
                     displayInt((int)intValue);
+                } else if (isFloat(content)) {
+                    displayFloat(parseFloat(content));
                 } else if ((content[0] == '"' && content[strlen(content)-1] == '"') || 
                           (content[0] == '\'' && content[strlen(content)-1] == '\'')) {
                     content[strlen(content)-1] = '\0';
@@ -107,8 +122,14 @@ void interpretCommand(const char *command, int lineNumber) {
         char *value = equalsSign + 1;
         while (*value == ' ') value++; // Skip leading spaces
 
-        // Check if it's a formatted string assignment
-        if (value[0] == '(' && strchr(value, ',') != NULL) {
+        // Add boolean value check before other checks
+        if (strcmp(value, "true") == 0) {
+            int boolValue = 1;
+            addVariable(name, BOOLEAN, &boolValue);
+        } else if (strcmp(value, "false") == 0) {
+            int boolValue = 0;
+            addVariable(name, BOOLEAN, &boolValue);
+        } else if (value[0] == '(' && strchr(value, ',') != NULL) {
             char *content = strdup(value + 1);
             char *closingParen = strrchr(content, ')');
             if (closingParen) {
@@ -145,6 +166,9 @@ void interpretCommand(const char *command, int lineNumber) {
             long intValue = strtol(value, &endptr, 10);
             if (*endptr == '\0') {
                 addVariable(name, INT, &intValue);
+            } else if (isFloat(value)) {
+                float floatValue = parseFloat(value);
+                addVariable(name, FLOAT, &floatValue);
             } else {
                 // Check for surrounding quotes
                 size_t valueLength = strlen(value);

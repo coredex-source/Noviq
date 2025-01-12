@@ -8,7 +8,7 @@ It supports basic variable types and string formatting capabilities.
 
 2. Variable System
 ----------------
-LiteCode supports two primary variable types:
+LiteCode supports four primary variable types:
 a) Integers: Whole numbers (positive or negative)
    Syntax: variableName = number
    Example: count = 42
@@ -16,6 +16,14 @@ a) Integers: Whole numbers (positive or negative)
 b) Strings: Text enclosed in quotes
    Syntax: variableName = "text" or variableName = 'text'
    Example: name = "John"
+
+c) Floats: Decimal numbers
+   Syntax: variableName = number.number
+   Example: price = 42.99
+
+d) Booleans: True/false values
+   Syntax: variableName = true or variableName = false
+   Example: isValid = true
 
 3. Display System
 ---------------
