@@ -1,0 +1,5 @@
+x = 5
+display("Hello, World!")
+display("LiteCode is running!")
+display(9)
+display("(%var1)",x)

@@ -1,14 +1,38 @@
-display()
-Syntax:
-display("Some Text")
-display("(%var1)",variable)
-display("Some Text (%var1)",variable)
+# Litecode Language Features
 
-variable defination:
-Syntax:
-let variable_name be variable_value
-let variable_name be a/an variable_type (String/Integer/Float) [Default Values -> String = "" | Integer = 0 | Float = 0.00]
+## Display Command
+The `display` command is used to print text or integers to the console.
 
-Arthemetic Operations (All the python operations):
-Syntax:
-variable_name = var1 + var2 - var3 + ((var1 + var2)/var3) * var4 // 2      ...
+### Syntax
+```
+display("text")
+display('text')
+display(integer)
+```
+
+### Examples
+```
+display("Hello, World!")
+display('Hello, World!')
+display(123)
+```
+
+## Variable Declaration
+Variables can be declared and assigned values. The type of the variable is automatically determined based on the value assigned. Strings must be enclosed in double quotes (`"`) or single quotes (`'`).
+
+### Syntax
+```
+variable = value
+```
+
+### Examples
+```
+name = "John Doe"
+age = 30
+greeting = 'Hello, World!'
+```
+
+### Notes
+- Variable names must not contain spaces.
+- Strings must be enclosed in matching quotes.
+- Integers are automatically detected if they are not enclosed in quotes.
