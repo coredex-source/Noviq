@@ -120,7 +120,6 @@ Variable *evaluateExpression(const char *expr) {
     char *c = ptr;
     while (*c) {
         if (isOperator(*c)) {
-            // Verify this is not a negative number at start
             if (*c == '-' && c == ptr) {
                 c++;
                 continue;
@@ -165,27 +164,29 @@ Variable *evaluateExpression(const char *expr) {
     Variable temp_left, temp_right;
     
     // Parse left operand
-    if (isdigit(*leftStr) || (*leftStr == '-' && strlen(leftStr) > 1)) {
-        temp_left.type = isFloat(leftStr) ? FLOAT : INT;
-        if (temp_left.type == FLOAT)
-            temp_left.value.floatValue = parseFloat(leftStr);
-        else
-            temp_left.value.intValue = atoi(leftStr);
-        left = &temp_left;
-    } else {
-        left = findVariable(leftStr);
+    left = findVariable(leftStr);
+    if (!left) {
+        if (isdigit(*leftStr) || (*leftStr == '-' && strlen(leftStr) > 1)) {
+            temp_left.type = isFloat(leftStr) ? FLOAT : INT;
+            if (temp_left.type == FLOAT)
+                temp_left.value.floatValue = parseFloat(leftStr);
+            else
+                temp_left.value.intValue = atoi(leftStr);
+            left = &temp_left;
+        }
     }
     
     // Parse right operand
-    if (isdigit(*rightStr) || (*rightStr == '-' && strlen(rightStr) > 1)) {
-        temp_right.type = isFloat(rightStr) ? FLOAT : INT;
-        if (temp_right.type == FLOAT)
-            temp_right.value.floatValue = parseFloat(rightStr);
-        else
-            temp_right.value.intValue = atoi(rightStr);
-        right = &temp_right;
-    } else {
-        right = findVariable(rightStr);
+    right = findVariable(rightStr);
+    if (!right) {
+        if (isdigit(*rightStr) || (*rightStr == '-' && strlen(rightStr) > 1)) {
+            temp_right.type = isFloat(rightStr) ? FLOAT : INT;
+            if (temp_right.type == FLOAT)
+                temp_right.value.floatValue = parseFloat(rightStr);
+            else
+                temp_right.value.intValue = atoi(rightStr);
+            right = &temp_right;
+        }
     }
     
     if (!left || !right) {
@@ -193,9 +194,10 @@ Variable *evaluateExpression(const char *expr) {
         return NULL;
     }
     
-    // Perform operation
+    // Perform operation and set result type
     Variable *result = malloc(sizeof(Variable));
     *result = performOperation(left, right, operator);
+    result->type = (left->type == FLOAT || right->type == FLOAT) ? FLOAT : INT;
     
     free(trimmed);
     return result;
@@ -279,65 +281,28 @@ void interpretCommand(const char *command, int lineNumber) {
         } else if (strcmp(value, "false") == 0) {
             int boolValue = 0;
             addVariable(name, BOOLEAN, &boolValue);
-        } else if (value[0] == '(' && strchr(value, ',') != NULL) {
-            char *content = strdup(value + 1);
-            char *closingParen = strrchr(content, ')');
-            if (closingParen) {
-                *closingParen = '\0';
-                
-                // Parse format and variables
-                char *format = strtok(content, ",");
-                if (format[0] == '"' && format[strlen(format)-1] == '"') {
-                    format[strlen(format)-1] = '\0';
-                    format++;
-                    
-                    char *vars[10];
-                    int varCount = 0;
-                    char *var;
-                    while ((var = strtok(NULL, ",")) != NULL) {
-                        while (*var == ' ') var++;
-                        vars[varCount++] = var;
-                    }
-                    
-                    char *result = createFormattedString(format, vars, varCount);
-                    if (result) {
-                        addVariable(name, STRING, result);
-                        free(result);
-                    } else {
-                        printf("Error: Failed to create formatted string on line %d\n", lineNumber);
-                        exit(EXIT_FAILURE);
-                    }
-                }
-                free(content);
-            }
-        } else {
-            // Check for arithmetic operations
+        } else if (isOperator(value[0]) || strchr(value, '+') || strchr(value, '-') || 
+                  strchr(value, '*') || strchr(value, '/')) {
+            // Only evaluate as expression if it contains operators
             Variable *result = evaluateExpression(value);
             if (result) {
                 addVariable(name, result->type, &result->value);
                 free(result);
-            } else {
-                // Check if value is an integer
-                char *endptr;
-                long intValue = strtol(value, &endptr, 10);
-                if (*endptr == '\0') {
-                    addVariable(name, INT, &intValue);
-                } else if (isFloat(value)) {
+            }
+        } else {
+            // Handle simple assignments without evaluation
+            if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
+                if (isFloat(value)) {
                     float floatValue = parseFloat(value);
                     addVariable(name, FLOAT, &floatValue);
                 } else {
-                    // Check for surrounding quotes
-                    size_t valueLength = strlen(value);
-                    if ((value[0] == '"' && value[valueLength - 1] == '"') || 
-                        (value[0] == '\'' && value[valueLength - 1] == '\'')) {
-                        value[valueLength - 1] = '\0';
-                        addVariable(name, STRING, value + 1);
-                    } else {
-                        printf("Syntax error on line %d: missing enclosing quotes or invalid integer in line: %s\n", lineNumber, command);
-                        free(name);
-                        exit(EXIT_FAILURE);
-                    }
+                    int intValue = atoi(value);
+                    addVariable(name, INT, &intValue);
                 }
+            } else if (value[0] == '"' || value[0] == '\'') {
+                size_t valueLength = strlen(value);
+                value[valueLength - 1] = '\0';
+                addVariable(name, STRING, value + 1);
             }
         }
 

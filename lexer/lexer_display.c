@@ -19,13 +19,18 @@ void displayFloat(float value) {
     printf("%f\n", value);
 }
 
+// Add this helper function before displayFormatted
+int isExpression(const char* str) {
+    return strchr(str, '+') || strchr(str, '-') || 
+           strchr(str, '*') || strchr(str, '/');
+}
+
 void displayFormatted(const char *format, char **vars, int varCount) {
     char output[1024] = "";
     
     while (*format) {
         if (*format == '%' && strncmp(format, "%var", 4) == 0) {
             format += 4;
-            // Get the variable number
             int varNum = 0;
             while (*format >= '0' && *format <= '9') {
                 varNum = varNum * 10 + (*format - '0');
@@ -36,7 +41,38 @@ void displayFormatted(const char *format, char **vars, int varCount) {
                 printf("Error: Invalid variable number %d\n", varNum);
                 return;
             }
-            
+
+            // Trim whitespace from the variable/expression
+            char *trimmed = strdup(vars[varNum - 1]);
+            char *start = trimmed;
+            while (*start == ' ') start++;
+            char *end = start + strlen(start) - 1;
+            while (end > start && *end == ' ') end--;
+            *(end + 1) = '\0';
+
+            // Check if the argument is an expression
+            if (isExpression(start)) {
+                Variable *result = evaluateExpression(start);
+                if (result) {
+                    if (result->type == INT) {
+                        char numStr[32];
+                        sprintf(numStr, "%d", result->value.intValue);
+                        strcat(output, numStr);
+                    } else if (result->type == FLOAT) {
+                        char numStr[32];
+                        sprintf(numStr, "%.6f", result->value.floatValue);
+                        strcat(output, numStr);
+                    }
+                    free(result);
+                } else {
+                    printf("Error: Failed to evaluate expression '%s'\n", start);
+                }
+                free(trimmed);
+                continue;
+            }
+            free(trimmed);
+
+            // Regular variable lookup
             Variable *var = findVariable(vars[varNum - 1]);
             if (var) {
                 if (var->type == INT) {
