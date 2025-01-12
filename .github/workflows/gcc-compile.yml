@@ -22,6 +22,13 @@ jobs:
       uses: egor-tensin/setup-mingw@v2
       with:
         platform: x64
+        version: 13.2.0
+
+    - name: Set up MinGW path (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        refreshenv
 
     - name: Install GCC (macOS)
       if: runner.os == 'macOS'
@@ -35,7 +42,9 @@ jobs:
 
     - name: Build (Windows)
       if: runner.os == 'Windows'
+      shell: cmd
       run: |
+        gcc --version
         gcc -o litecode.exe litecode.c lexar/lexar_interpret.c lexar/lexar_display.c
 
     - name: Upload artifact
