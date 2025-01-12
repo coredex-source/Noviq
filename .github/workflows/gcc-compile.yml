@@ -1,0 +1,42 @@
+name: Build LiteCode
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up GCC
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: latest
+        platform: x64
+
+    - name: Build (Unix-like)
+      if: runner.os != 'Windows'
+      run: |
+        make all
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        gcc -o litecode.exe litecode.c lexar/lexar_interpret.c lexar/lexar_display.c
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: litecode-${{ runner.os }}
+        path: |
+          litecode*
+        if-no-files-found: error
