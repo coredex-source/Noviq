@@ -6,11 +6,16 @@ Just a simple interpreter based programming language written in C.
 
 ## Building and using
 ### Requirements:
-  - GCC
+  - GCC (Only GCC on windows.)
   - make
 ### Build using:
+- MacOS/Linux
 ```
 make all
+```
+- Windows
+```
+gcc -o litecode.exe litecode.c lexar/lexar_interpret.c lexar/lexar_display.c
 ```
 ### Run using:
 - MacOS/Linux:
