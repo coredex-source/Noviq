@@ -48,10 +48,20 @@ jobs:
       run: |
         gcc -o litecode.exe litecode.c lexar/lexar_interpret.c lexar/lexar_display.c
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload artifact (Windows/Linux)
+      if: runner.os != 'macOS'
+      uses: actions/upload-artifact@v4
       with:
         name: litecode-${{ runner.os }}
         path: |
           litecode*
+        if-no-files-found: error
+
+    - name: Upload artifact (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: litecode-${{ runner.os }}-${{ matrix.arch }}
+        path: |
+          litecode
         if-no-files-found: error
