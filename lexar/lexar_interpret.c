@@ -43,34 +43,44 @@ void interpretCommand(const char *command, int lineNumber) {
     if (strncmp(command, "display(", 8) == 0) {
         const char *closingParenthesis = strchr(command + 8, ')');
         if (closingParenthesis) {
-            size_t contentLength = closingParenthesis - (command + 8);
-            char *content = (char *)malloc(contentLength + 1);
-            if (content) {
-                strncpy(content, command + 8, contentLength);
-                content[contentLength] = '\0';
+            char *content = (char *)malloc(closingParenthesis - (command + 8) + 1);
+            strncpy(content, command + 8, closingParenthesis - (command + 8));
+            content[closingParenthesis - (command + 8)] = '\0';
+
+            // First check if it's a formatted string (starts with quote and contains %var)
+            if (content[0] == '"' && strstr(content, "%var") != NULL && strchr(content, ',') != NULL) {
+                char *format = strtok(content, ",");
+                format[strlen(format)-1] = '\0';
+                format++;
                 
-                // Check if content is an integer
+                // Parse variables
+                char *vars[10];  // Maximum 10 variables
+                int varCount = 0;
+                char *var;
+                while ((var = strtok(NULL, ",")) != NULL) {
+                    while (*var == ' ') var++;  // Skip leading spaces
+                    vars[varCount++] = var;
+                }
+                
+                displayFormatted(format, vars, varCount);
+            } else {
+                // Handle regular display cases
                 char *endptr;
                 long intValue = strtol(content, &endptr, 10);
                 if (*endptr == '\0') {
                     displayInt((int)intValue);
+                } else if ((content[0] == '"' && content[strlen(content)-1] == '"') || 
+                          (content[0] == '\'' && content[strlen(content)-1] == '\'')) {
+                    content[strlen(content)-1] = '\0';
+                    display(content + 1);
                 } else {
-                    // Check for surrounding quotes
-                    if ((content[0] == '"' && content[contentLength - 1] == '"') || 
-                        (content[0] == '\'' && content[contentLength - 1] == '\'')) {
-                        content[contentLength - 1] = '\0';
-                        display(content + 1);
-                    } else {
-                        printf("Syntax error on line %d: missing enclosing quotes or invalid integer in line: %s\n", lineNumber, command);
-                        free(content);
-                        exit(EXIT_FAILURE);
-                    }
+                    printf("Syntax error on line %d: invalid format\n", lineNumber);
+                    exit(EXIT_FAILURE);
                 }
-                
-                free(content);
             }
+            free(content);
         } else {
-            printf("Syntax error on line %d: missing closing parenthesis in line: %s\n", lineNumber, command);
+            printf("Syntax error on line %d: missing closing parenthesis\n", lineNumber);
             exit(EXIT_FAILURE);
         }
     } else if (strchr(command, '=') != NULL) {
@@ -80,25 +90,73 @@ void interpretCommand(const char *command, int lineNumber) {
         strncpy(name, command, nameLength);
         name[nameLength] = '\0';
 
+        // Trim trailing whitespace from variable name
+        char *end = name + nameLength - 1;
+        while (end > name && (*end == ' ' || *end == '\t')) {
+            *end = '\0';
+            end--;
+        }
+
+        // Trim leading whitespace from variable name
+        char *start = name;
+        while (*start == ' ' || *start == '\t') start++;
+        if (start != name) {
+            memmove(name, start, strlen(start) + 1);
+        }
+
         char *value = equalsSign + 1;
         while (*value == ' ') value++; // Skip leading spaces
 
-        // Check if value is an integer
-        char *endptr;
-        long intValue = strtol(value, &endptr, 10);
-        if (*endptr == '\0') {
-            addVariable(name, INT, &intValue);
+        // Check if it's a formatted string assignment
+        if (value[0] == '(' && strchr(value, ',') != NULL) {
+            char *content = strdup(value + 1);
+            char *closingParen = strrchr(content, ')');
+            if (closingParen) {
+                *closingParen = '\0';
+                
+                // Parse format and variables
+                char *format = strtok(content, ",");
+                if (format[0] == '"' && format[strlen(format)-1] == '"') {
+                    format[strlen(format)-1] = '\0';
+                    format++;
+                    
+                    char *vars[10];
+                    int varCount = 0;
+                    char *var;
+                    while ((var = strtok(NULL, ",")) != NULL) {
+                        while (*var == ' ') var++;
+                        vars[varCount++] = var;
+                    }
+                    
+                    char *result = createFormattedString(format, vars, varCount);
+                    if (result) {
+                        addVariable(name, STRING, result);
+                        free(result);
+                    } else {
+                        printf("Error: Failed to create formatted string on line %d\n", lineNumber);
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                free(content);
+            }
         } else {
-            // Check for surrounding quotes
-            size_t valueLength = strlen(value);
-            if ((value[0] == '"' && value[valueLength - 1] == '"') || 
-                (value[0] == '\'' && value[valueLength - 1] == '\'')) {
-                value[valueLength - 1] = '\0';
-                addVariable(name, STRING, value + 1);
+            // Check if value is an integer
+            char *endptr;
+            long intValue = strtol(value, &endptr, 10);
+            if (*endptr == '\0') {
+                addVariable(name, INT, &intValue);
             } else {
-                printf("Syntax error on line %d: missing enclosing quotes or invalid integer in line: %s\n", lineNumber, command);
-                free(name);
-                exit(EXIT_FAILURE);
+                // Check for surrounding quotes
+                size_t valueLength = strlen(value);
+                if ((value[0] == '"' && value[valueLength - 1] == '"') || 
+                    (value[0] == '\'' && value[valueLength - 1] == '\'')) {
+                    value[valueLength - 1] = '\0';
+                    addVariable(name, STRING, value + 1);
+                } else {
+                    printf("Syntax error on line %d: missing enclosing quotes or invalid integer in line: %s\n", lineNumber, command);
+                    free(name);
+                    exit(EXIT_FAILURE);
+                }
             }
         }
 

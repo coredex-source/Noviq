@@ -1,38 +1,86 @@
-# Litecode Language Features
+LiteCode Language Reference
+=========================
 
-## Display Command
-The `display` command is used to print text or integers to the console.
+1. Introduction
+-------------
+LiteCode is a simple, interpreted programming language designed for readability and ease of use. 
+It supports basic variable types and string formatting capabilities.
 
-### Syntax
-```
-display("text")
-display('text')
-display(integer)
-```
+2. Variable System
+----------------
+LiteCode supports two primary variable types:
+a) Integers: Whole numbers (positive or negative)
+   Syntax: variableName = number
+   Example: count = 42
 
-### Examples
-```
-display("Hello, World!")
-display('Hello, World!')
-display(123)
-```
+b) Strings: Text enclosed in quotes
+   Syntax: variableName = "text" or variableName = 'text'
+   Example: name = "John"
 
-## Variable Declaration
-Variables can be declared and assigned values. The type of the variable is automatically determined based on the value assigned. Strings must be enclosed in double quotes (`"`) or single quotes (`'`).
+3. Display System
+---------------
+The display command is used for output and supports multiple formats:
 
-### Syntax
-```
-variable = value
-```
+a) Direct Display:
+   - Strings: display("text") or display('text')
+   - Numbers: display(number)
+   Example: display("Hello, World!")
+           display(42)
 
-### Examples
-```
-name = "John Doe"
-age = 30
-greeting = 'Hello, World!'
-```
+b) Variable Display:
+   Uses %var[n] format where n is the variable position (1-based)
+   Syntax: display("%var1", variableName)
+   Example: display("%var1", x)  // Shows value of x
 
-### Notes
-- Variable names must not contain spaces.
-- Strings must be enclosed in matching quotes.
-- Integers are automatically detected if they are not enclosed in quotes.
+c) Multiple Variable Display:
+   Can combine multiple variables in one display
+   Syntax: display("text %var1 more-text %var2", var1, var2)
+   Example: display("Age: %var1, Name: %var2", age, name)
+
+4. String Formatting System
+------------------------
+LiteCode supports dynamic string creation using variables:
+
+a) Basic Format:
+   Syntax: result = ("format string", var1, var2, ...)
+   Example: greeting = ("%var1, welcome!", name)
+
+b) Multiple Variables:
+   Can combine multiple variables in any order
+   Example: info = ("%var1 is %var2 years old", name, age)
+
+5. Syntax Rules
+-------------
+a) Variables:
+   - Must start with letter or underscore
+   - Can contain letters, numbers, underscores
+   - Case-sensitive
+   - No special characters or spaces
+
+b) Strings:
+   - Must use matching quotes ('' or "")
+   - Cannot mix quote types
+   - Can contain any characters
+
+c) General:
+   - One command per line
+   - No line terminators (semicolons) needed
+   - Whitespace is ignored except in strings
+   - Empty lines are allowed
+
+6. Error Handling
+---------------
+The interpreter provides specific errors for:
+a) Syntax Violations:
+   - Missing or mismatched quotes
+   - Invalid variable names
+   - Missing parentheses
+   - Invalid number format
+
+b) Runtime Errors:
+   - Undefined variables
+   - Invalid variable types
+   - Format string errors
+   - Memory allocation failures
+
+Each error message includes the line number and details about the error.

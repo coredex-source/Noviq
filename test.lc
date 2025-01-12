@@ -1,5 +1,7 @@
 x = 5
+y = "Sam"
 display("Hello, World!")
 display("LiteCode is running!")
 display(9)
-display("(%var1)",x)
+z = ("%var2 Hi %var1",x,y)
+display("%var1",z)
