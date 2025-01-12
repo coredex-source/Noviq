@@ -102,6 +102,9 @@ a) Supported Operators:
    - Subtraction
    * Multiplication
    / Division
+   // Floor Division
+   % Modulus
+   ** Exponentiation
 
 b) Usage:
    Syntax: result = operand1 operator operand2
@@ -110,6 +113,9 @@ b) Usage:
    diff = 10 - 4
    prod = 6 * 2
    quot = 15 / 3
+   floor_div = 17 // 5    // Results in 3
+   remainder = 17 % 5     // Results in 2
+   power = 2 ** 3        // Results in 8
 
 c) Rules:
    - Operands can be numbers or variables

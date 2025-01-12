@@ -14,6 +14,9 @@ typedef struct {
     } value;
 } Variable;
 
+// Add global line number
+extern int currentLineNumber;
+
 void interpretCommand(const char *command, int lineNumber);
 Variable *findVariable(const char *name);
 
@@ -26,7 +29,7 @@ int isBoolean(const char *str);
 
 // Add arithmetic operation helper functions
 int isOperator(char c);
-Variable performOperation(Variable *left, Variable *right, char operator);
+Variable performOperation(Variable *left, Variable *right, const char *operator);
 Variable *evaluateExpression(const char *expr);
 
 #endif // LEXER_INTERPRET_H

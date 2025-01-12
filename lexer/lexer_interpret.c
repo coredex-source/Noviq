@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>  // Add this for isdigit()
+#include <ctype.h>
+#include <math.h>  // Add this for pow() function
 #include "lexer_display.h"
 #include "lexer_interpret.h"
 
@@ -9,12 +10,30 @@
 Variable *variables = NULL;
 size_t variableCount = 0;
 
+// Add global line number definition
+int currentLineNumber = 0;
+
 Variable *findVariable(const char *name) {
+    char *trimmed = strdup(name);
+    char *ptr = trimmed;
+    
+    // Trim leading whitespace
+    while (*ptr == ' ' || *ptr == '\t') ptr++;
+    
+    // Trim trailing whitespace
+    char *end = ptr + strlen(ptr) - 1;
+    while (end > ptr && (*end == ' ' || *end == '\t')) {
+        *end = '\0';
+        end--;
+    }
+
     for (size_t i = 0; i < variableCount; i++) {
-        if (strcmp(variables[i].name, name) == 0) {
+        if (strcmp(variables[i].name, ptr) == 0) {
+            free(trimmed);
             return &variables[i];
         }
     }
+    free(trimmed);
     return NULL;
 }
 
@@ -52,59 +71,66 @@ float parseFloat(const char *str) {
 }
 
 int isOperator(char c) {
-    return c == '+' || c == '-' || c == '*' || c == '/';
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '%';
 }
 
-Variable performOperation(Variable *left, Variable *right, char operator) {
+Variable performOperation(Variable *left, Variable *right, const char *operator) {
     Variable result;
     
     // Type checking
     if (left->type == STRING || right->type == STRING) {
-        fprintf(stderr, "Error: Cannot perform arithmetic operations with strings\n");
-        exit(1);
+        fprintf(stderr, "Error on line %d: Cannot perform arithmetic operations with strings\n", currentLineNumber);
+        exit(EXIT_FAILURE);  // Changed from exit(1)
     }
 
     if (left->type == BOOLEAN || right->type == BOOLEAN) {
-        fprintf(stderr, "Error: Cannot perform arithmetic operations with booleans\n");
-        exit(1);
+        fprintf(stderr, "Error on line %d: Cannot perform arithmetic operations with booleans\n", currentLineNumber);
+        exit(EXIT_FAILURE);  // Changed from exit(1)
     }
     
-    // If either operand is float, result is float
-    if (left->type == FLOAT || right->type == FLOAT) {
-        float leftVal = (left->type == FLOAT) ? left->value.floatValue : 
-                                               (float)left->value.intValue;
-        float rightVal = (right->type == FLOAT) ? right->value.floatValue : 
-                                                 (float)right->value.intValue;
-        
-        switch(operator) {
+    float leftVal = (left->type == FLOAT) ? left->value.floatValue : (float)left->value.intValue;
+    float rightVal = (right->type == FLOAT) ? right->value.floatValue : (float)right->value.intValue;
+    
+    result.type = FLOAT;
+
+    if (strcmp(operator, "**") == 0) {
+        result.value.floatValue = pow(leftVal, rightVal);
+    } else if (strcmp(operator, "//") == 0) {
+        if (rightVal == 0) {
+            fprintf(stderr, "Error on line %d: Division by zero\n", currentLineNumber);
+            exit(EXIT_FAILURE);  // Changed from exit(1)
+        }
+        result.type = INT;
+        result.value.intValue = (int)(leftVal / rightVal);
+    } else if (strcmp(operator, "%") == 0) {
+        if (rightVal == 0) {
+            fprintf(stderr, "Error: Modulo by zero\n");
+            exit(EXIT_FAILURE);
+        }
+        result.type = INT;
+        result.value.intValue = (int)leftVal % (int)rightVal;
+    } else {
+        switch(operator[0]) {
             case '+': result.value.floatValue = leftVal + rightVal; break;
             case '-': result.value.floatValue = leftVal - rightVal; break;
             case '*': result.value.floatValue = leftVal * rightVal; break;
             case '/':
                 if (rightVal == 0) {
                     fprintf(stderr, "Error: Division by zero\n");
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 }
                 result.value.floatValue = leftVal / rightVal;
                 break;
         }
-    } else {
-        // Both operands are integers
-        result.type = INT;
-        switch(operator) {
-            case '+': result.value.intValue = left->value.intValue + right->value.intValue; break;
-            case '-': result.value.intValue = left->value.intValue - right->value.intValue; break;
-            case '*': result.value.intValue = left->value.intValue * right->value.intValue; break;
-            case '/':
-                if (right->value.intValue == 0) {
-                    fprintf(stderr, "Error: Division by zero\n");
-                    exit(1);
-                }
-                result.type = FLOAT;
-                result.value.floatValue = (float)left->value.intValue / right->value.intValue;
-                break;
-        }
     }
+
+    // Convert to INT if result is a whole number and operation isn't division
+    if (result.type == FLOAT && operator[0] != '/' && 
+        result.value.floatValue == (int)result.value.floatValue) {
+        result.type = INT;
+        result.value.intValue = (int)result.value.floatValue;
+    }
+    
     return result;
 }
 
@@ -112,99 +138,136 @@ Variable *evaluateExpression(const char *expr) {
     char *trimmed = strdup(expr);
     char *ptr = trimmed;
     
-    // Skip leading whitespace
     while (*ptr == ' ' || *ptr == '\t') ptr++;
-    
-    // Find operator while handling whitespace
+
+    // Check for two-character operators first
     char *op = NULL;
-    char *c = ptr;
-    while (*c) {
-        if (isOperator(*c)) {
-            if (*c == '-' && c == ptr) {
-                c++;
-                continue;
-            }
+    for (char *c = ptr; *c; c++) {
+        if ((c[0] == '*' && c[1] == '*') || 
+            (c[0] == '/' && c[1] == '/')) {
             op = c;
             break;
         }
-        c++;
-    }
-    
-    if (!op) {
-        free(trimmed);
-        return NULL;
-    }
-    
-    // Split expression into left and right parts
-    char operator = *op;
-    *op = '\0';
-    char *leftStr = ptr;
-    char *rightStr = op + 1;
-    
-    // Trim trailing whitespace from left operand
-    char *leftEnd = op - 1;
-    while (leftEnd > leftStr && (*leftEnd == ' ' || *leftEnd == '\t')) {
-        *leftEnd = '\0';
-        leftEnd--;
-    }
-    
-    // Trim leading whitespace from right operand
-    while (*rightStr == ' ' || *rightStr == '\t') rightStr++;
-    
-    // Trim trailing whitespace from right operand
-    char *rightEnd = rightStr + strlen(rightStr) - 1;
-    while (rightEnd > rightStr && (*rightEnd == ' ' || *rightEnd == '\t')) {
-        *rightEnd = '\0';
-        rightEnd--;
+        // Check for modulo or single operators
+        if (*c == '%' || (*c == '*' || *c == '/' || *c == '+' || *c == '-')) {
+            if (*c == '-' && (c == ptr || isOperator(*(c-1)))) {
+                continue;  // Skip leading minus or minus after operator
+            }
+            if (!op) op = c;
+        }
     }
 
-    // Create temporary variables for operands
-    Variable *left = NULL;
-    Variable *right = NULL;
+    if (!op) {
+        // First check if it's a simple variable or value
+        if (!strchr(ptr, '+') && !strchr(ptr, '-') && !strchr(ptr, '*') && !strchr(ptr, '/')) {
+            Variable *var = findVariable(ptr);
+            if (var) {
+                Variable *result = malloc(sizeof(Variable));
+                *result = *var;
+                free(trimmed);
+                return result;
+            }
+            // Try parsing as number
+            if (isdigit(*ptr) || (*ptr == '-' && isdigit(*(ptr + 1)))) {
+                Variable *result = malloc(sizeof(Variable));
+                if (isFloat(ptr)) {
+                    result->type = FLOAT;
+                    result->value.floatValue = parseFloat(ptr);
+                } else {
+                    result->type = INT;
+                    result->value.intValue = atoi(ptr);
+                }
+                free(trimmed);
+                return result;
+            }
+            free(trimmed);
+            return NULL;
+        }
+    }
+
+    // Handle two-character operators
+    char operator[3] = {0};
+    char *rightStr;
+    if ((op[0] == '*' && op[1] == '*') || (op[0] == '/' && op[1] == '/')) {
+        operator[0] = op[0];
+        operator[1] = op[1];
+        *op = '\0';
+        rightStr = op + 2;
+    } else {
+        operator[0] = *op;
+        *op = '\0';
+        rightStr = op + 1;
+    }
+    char *leftStr = ptr;
+
+    // Split the expression and save the operator
+    char *left_trimmed = strdup(leftStr);
+    char *right_trimmed = strdup(rightStr);
+    
+    char *left_ptr = left_trimmed;
+    char *right_ptr = right_trimmed;
+    
+    // Trim left operand
+    while (*left_ptr == ' ' || *left_ptr == '\t') left_ptr++;
+    char *left_end = left_ptr + strlen(left_ptr) - 1;
+    while (left_end > left_ptr && (*left_end == ' ' || *left_end == '\t')) {
+        *left_end = '\0';
+        left_end--;
+    }
+    
+    // Trim right operand
+    while (*right_ptr == ' ' || *right_ptr == '\t') right_ptr++;
+    char *right_end = right_ptr + strlen(right_ptr) - 1;
+    while (right_end > right_ptr && (*right_end == ' ' || *right_end == '\t')) {
+        *right_end = '\0';
+        right_end--;
+    }
+
+    // Get operands
+    Variable *left = findVariable(left_ptr);
+    Variable *right = findVariable(right_ptr);
     Variable temp_left, temp_right;
-    
-    // Parse left operand
-    left = findVariable(leftStr);
-    if (!left) {
-        if (isdigit(*leftStr) || (*leftStr == '-' && strlen(leftStr) > 1)) {
-            temp_left.type = isFloat(leftStr) ? FLOAT : INT;
-            if (temp_left.type == FLOAT)
-                temp_left.value.floatValue = parseFloat(leftStr);
-            else
-                temp_left.value.intValue = atoi(leftStr);
-            left = &temp_left;
-        }
+
+    // Handle numeric literals for left operand
+    if (!left && (isdigit(*left_ptr) || (*left_ptr == '-' && isdigit(*(left_ptr + 1))))) {
+        temp_left.type = isFloat(left_ptr) ? FLOAT : INT;
+        if (temp_left.type == FLOAT)
+            temp_left.value.floatValue = parseFloat(left_ptr);
+        else
+            temp_left.value.intValue = atoi(left_ptr);
+        left = &temp_left;
     }
-    
-    // Parse right operand
-    right = findVariable(rightStr);
-    if (!right) {
-        if (isdigit(*rightStr) || (*rightStr == '-' && strlen(rightStr) > 1)) {
-            temp_right.type = isFloat(rightStr) ? FLOAT : INT;
-            if (temp_right.type == FLOAT)
-                temp_right.value.floatValue = parseFloat(rightStr);
-            else
-                temp_right.value.intValue = atoi(rightStr);
-            right = &temp_right;
-        }
+
+    // Handle numeric literals for right operand
+    if (!right && (isdigit(*right_ptr) || (*right_ptr == '-' && isdigit(*(right_ptr + 1))))) {
+        temp_right.type = isFloat(right_ptr) ? FLOAT : INT;
+        if (temp_right.type == FLOAT)
+            temp_right.value.floatValue = parseFloat(right_ptr);
+        else
+            temp_right.value.intValue = atoi(right_ptr);
+        right = &temp_right;
     }
+
+    // Clean up
+    free(left_trimmed);
+    free(right_trimmed);
     
     if (!left || !right) {
         free(trimmed);
         return NULL;
     }
-    
-    // Perform operation and set result type
+
+    // Create operator string and perform operation
     Variable *result = malloc(sizeof(Variable));
     *result = performOperation(left, right, operator);
-    result->type = (left->type == FLOAT || right->type == FLOAT) ? FLOAT : INT;
-    
+
     free(trimmed);
     return result;
 }
 
 // Function to interpret and execute commands
 void interpretCommand(const char *command, int lineNumber) {
+    currentLineNumber = lineNumber;  // Set the current line number
     if (strncmp(command, "display(", 8) == 0) {
         const char *closingParenthesis = strchr(command + 8, ')');
         if (closingParenthesis) {
@@ -274,24 +337,26 @@ void interpretCommand(const char *command, int lineNumber) {
         char *value = equalsSign + 1;
         while (*value == ' ') value++; // Skip leading spaces
 
-        // Add boolean value check before other checks
-        if (strcmp(value, "true") == 0) {
-            int boolValue = 1;
-            addVariable(name, BOOLEAN, &boolValue);
-        } else if (strcmp(value, "false") == 0) {
-            int boolValue = 0;
-            addVariable(name, BOOLEAN, &boolValue);
-        } else if (isOperator(value[0]) || strchr(value, '+') || strchr(value, '-') || 
-                  strchr(value, '*') || strchr(value, '/')) {
-            // Only evaluate as expression if it contains operators
-            Variable *result = evaluateExpression(value);
-            if (result) {
-                addVariable(name, result->type, &result->value);
-                free(result);
+        // Check for arithmetic expression first
+        Variable *result = evaluateExpression(value);
+        if (result) {
+            if (result->type == FLOAT) {
+                float floatVal = result->value.floatValue;
+                addVariable(name, FLOAT, &floatVal);
+            } else {
+                int intVal = result->value.intValue;
+                addVariable(name, INT, &intVal);
             }
+            free(result);
         } else {
-            // Handle simple assignments without evaluation
-            if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
+            // Handle non-expression assignments
+            if (strcmp(value, "true") == 0) {
+                int boolValue = 1;
+                addVariable(name, BOOLEAN, &boolValue);
+            } else if (strcmp(value, "false") == 0) {
+                int boolValue = 0;
+                addVariable(name, BOOLEAN, &boolValue);
+            } else if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
                 if (isFloat(value)) {
                     float floatValue = parseFloat(value);
                     addVariable(name, FLOAT, &floatValue);
