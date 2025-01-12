@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "lexar/lexar_interpret.h"
+#include "lexer/lexer_interpret.h"
 
 #ifdef _WIN32
 // Windows implementation of getline

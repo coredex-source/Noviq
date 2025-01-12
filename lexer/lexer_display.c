@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "lexar_display.h"
-#include "lexar_interpret.h"
+#include "lexer_display.h"
+#include "lexer_interpret.h"
 
 // Function to display text
 void display(const char *text) {

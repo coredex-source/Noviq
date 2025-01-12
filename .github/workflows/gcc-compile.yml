@@ -46,7 +46,7 @@ jobs:
     - name: Build (Windows)
       if: runner.os == 'Windows'
       run: |
-        gcc -o litecode.exe litecode.c lexar/lexar_interpret.c lexar/lexar_display.c
+        gcc -o litecode.exe litecode.c lexer/lexer_interpret.c lexer/lexer_display.c
 
     - name: Upload artifact (Windows/Linux)
       if: runner.os != 'macOS'

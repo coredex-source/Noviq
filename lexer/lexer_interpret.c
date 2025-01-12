@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>  // Add this for isdigit()
-#include "lexar_display.h"
-#include "lexar_interpret.h"
+#include "lexer_display.h"
+#include "lexer_interpret.h"
 
 // Remove duplicate type definitions since they're in lexar_interpret.h
 Variable *variables = NULL;

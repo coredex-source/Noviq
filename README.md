@@ -15,7 +15,7 @@ make all
 ```
 - Windows
 ```
-gcc -o litecode.exe litecode.c lexar/lexar_interpret.c lexar/lexar_display.c
+gcc -o litecode.exe litecode.c lexer/lexer_interpret.c lexer/lexer_display.c
 ```
 ### Run using:
 - MacOS/Linux:

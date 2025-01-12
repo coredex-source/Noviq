@@ -1,5 +1,5 @@
-#ifndef LEXAR_INTERPRET_H
-#define LEXAR_INTERPRET_H
+#ifndef LEXER_INTERPRET_H
+#define LEXER_INTERPRET_H
 
 typedef enum { INT, STRING, FLOAT, BOOLEAN } VarType;
 
@@ -24,4 +24,4 @@ float parseFloat(const char *str);
 // Add boolean helper function declaration
 int isBoolean(const char *str);
 
-#endif // LEXAR_INTERPRET_H
+#endif // LEXER_INTERPRET_H
