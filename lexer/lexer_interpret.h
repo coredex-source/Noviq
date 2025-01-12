@@ -24,4 +24,9 @@ float parseFloat(const char *str);
 // Add boolean helper function declaration
 int isBoolean(const char *str);
 
+// Add arithmetic operation helper functions
+int isOperator(char c);
+Variable performOperation(Variable *left, Variable *right, char operator);
+Variable *evaluateExpression(const char *expr);
+
 #endif // LEXER_INTERPRET_H

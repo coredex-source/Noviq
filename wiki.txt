@@ -92,3 +92,27 @@ b) Runtime Errors:
    - Memory allocation failures
 
 Each error message includes the line number and details about the error.
+
+7. Arithmetic Operations
+---------------------
+LiteCode supports basic arithmetic operations for numbers:
+
+a) Supported Operators:
+   + Addition
+   - Subtraction
+   * Multiplication
+   / Division
+
+b) Usage:
+   Syntax: result = operand1 operator operand2
+   Examples: 
+   sum = 5 + 3
+   diff = 10 - 4
+   prod = 6 * 2
+   quot = 15 / 3
+
+c) Rules:
+   - Operands can be numbers or variables
+   - Operations between different types (int/float) result in float
+   - Division always produces float results
+   - Division by zero produces an error

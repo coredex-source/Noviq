@@ -4,8 +4,5 @@ a = 10.22
 b = false
 display("Hello, World!")
 display("LiteCode is running!")
-display(9)
-z = ("%var2 Hi %var1",x,y)
-display("%var1",z)
-
 display("Variable display: %var1 %var2 %var3 %var4",x,y,a,b)
+display("%var1",a+x)
