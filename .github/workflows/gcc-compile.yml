@@ -17,11 +17,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up GCC
+    - name: Install GCC (Windows)
+      if: runner.os == 'Windows'
       uses: egor-tensin/setup-gcc@v1
       with:
         version: latest
         platform: x64
+
+    - name: Install GCC (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install gcc
 
     - name: Build (Unix-like)
       if: runner.os != 'Windows'
