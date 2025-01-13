@@ -20,9 +20,9 @@ gcc -o litecode.exe litecode.c lexer/lexer_interpret.c lexer/lexer_display.c
 ### Run using:
 - MacOS/Linux:
 ```
-./litecode -e filename.ls
+./litecode -e filename.lc
 ```
 - Windows:
 ```
-litecode.exe -e filename.ls
+litecode.exe -e filename.lc
 ```
