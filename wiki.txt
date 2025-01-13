@@ -122,3 +122,25 @@ c) Rules:
    - Operations between different types (int/float) result in float
    - Division always produces float results
    - Division by zero produces an error
+
+8. Logical Operations
+------------------
+LiteCode supports basic logical operations:
+
+a) Supported Operators:
+   AND - Logical AND
+   OR  - Logical OR
+   NOT - Logical NOT
+
+b) Usage:
+   Syntax: result = operand1 operator operand2
+   Examples:
+   isTrue = true AND false    // Results in false
+   isTrue = true OR false     // Results in true
+   isTrue = NOT true          // Results in false
+
+c) Type Conversion Rules:
+   - Numbers: 0 is false, any other value is true
+   - Strings: Empty string is false, non-empty is true
+   - Booleans: Used directly
+   - Results are always boolean type

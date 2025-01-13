@@ -74,6 +74,12 @@ int isOperator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '%';
 }
 
+int isLogicalOperator(const char *str) {
+    return (strcmp(str, "AND") == 0 || 
+            strcmp(str, "OR") == 0 || 
+            strcmp(str, "NOT") == 0);
+}
+
 Variable performOperation(Variable *left, Variable *right, const char *operator) {
     Variable result;
     
@@ -134,14 +140,98 @@ Variable performOperation(Variable *left, Variable *right, const char *operator)
     return result;
 }
 
+Variable performLogicalOperation(Variable *left, Variable *right, const char *operator) {
+    Variable result;
+    result.type = BOOLEAN;
+
+    // Convert operands to boolean values
+    int leftBool = 0, rightBool = 0;
+
+    if (left) {
+        switch(left->type) {
+            case BOOLEAN: leftBool = left->value.boolValue; break;
+            case INT: leftBool = left->value.intValue != 0; break;
+            case FLOAT: leftBool = left->value.floatValue != 0; break;
+            case STRING: leftBool = strlen(left->value.stringValue) > 0; break;
+        }
+    }
+
+    if (right) {
+        switch(right->type) {
+            case BOOLEAN: rightBool = right->value.boolValue; break;
+            case INT: rightBool = right->value.intValue != 0; break;
+            case FLOAT: rightBool = right->value.floatValue != 0; break;
+            case STRING: rightBool = strlen(right->value.stringValue) > 0; break;
+        }
+    }
+
+    if (strcmp(operator, "AND") == 0) {
+        result.value.boolValue = leftBool && rightBool;
+    } else if (strcmp(operator, "OR") == 0) {
+        result.value.boolValue = leftBool || rightBool;
+    } else if (strcmp(operator, "NOT") == 0) {
+        result.value.boolValue = !leftBool;
+    }
+
+    return result;
+}
+
 Variable *evaluateExpression(const char *expr) {
     char *trimmed = strdup(expr);
     char *ptr = trimmed;
     
     while (*ptr == ' ' || *ptr == '\t') ptr++;
 
-    // Check for two-character operators first
+    // Check for NOT operator first
+    if (strncmp(ptr, "NOT ", 4) == 0) {
+        Variable *operand = evaluateExpression(ptr + 4);
+        if (operand) {
+            Variable *result = malloc(sizeof(Variable));
+            *result = performLogicalOperation(operand, NULL, "NOT");
+            free(operand);
+            free(trimmed);
+            return result;
+        }
+    }
+
+    // Check for AND/OR operators
+    char *andOp = strstr(ptr, " AND ");
+    char *orOp = strstr(ptr, " OR ");
     char *op = NULL;
+    const char *opStr = NULL;
+
+    if (andOp && (!orOp || andOp < orOp)) {
+        op = andOp;
+        opStr = "AND";
+    } else if (orOp) {
+        op = orOp;
+        opStr = "OR";
+    }
+
+    if (op) {
+        *op = '\0';
+        char *leftStr = ptr;
+        char *rightStr = op + strlen(opStr) + 2; // Skip operator and spaces
+
+        Variable *left = evaluateExpression(leftStr);
+        Variable *right = evaluateExpression(rightStr);
+
+        if (left && right) {
+            Variable *result = malloc(sizeof(Variable));
+            *result = performLogicalOperation(left, right, opStr);
+            free(left);
+            free(right);
+            free(trimmed);
+            return result;
+        }
+        if (left) free(left);
+        if (right) free(right);
+        free(trimmed);
+        return NULL;
+    }
+
+    // Check for two-character operators first
+    op = NULL;
     for (char *c = ptr; *c; c++) {
         if ((c[0] == '*' && c[1] == '*') || 
             (c[0] == '/' && c[1] == '/')) {
