@@ -36,4 +36,8 @@ Variable *evaluateExpression(const char *expr);
 int isLogicalOperator(const char *str);
 Variable performLogicalOperation(Variable *left, Variable *right, const char *operator);
 
+// Add these function declarations
+int isComparisonOperator(const char *str);
+Variable performComparison(Variable *left, Variable *right, const char *operator);
+
 #endif // LEXER_INTERPRET_H

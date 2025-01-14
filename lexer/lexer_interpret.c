@@ -80,6 +80,14 @@ int isLogicalOperator(const char *str) {
             strcmp(str, "NOT") == 0);
 }
 
+int isComparisonOperator(const char *str) {
+    return (strcmp(str, ">") == 0 || 
+            strcmp(str, "<") == 0 || 
+            strcmp(str, ">=") == 0 || 
+            strcmp(str, "<=") == 0 || 
+            strcmp(str, "==") == 0);
+}
+
 Variable performOperation(Variable *left, Variable *right, const char *operator) {
     Variable result;
     
@@ -176,11 +184,91 @@ Variable performLogicalOperation(Variable *left, Variable *right, const char *op
     return result;
 }
 
+Variable performComparison(Variable *left, Variable *right, const char *operator) {
+    Variable result;
+    result.type = BOOLEAN;
+
+    // Convert operands to comparable values
+    float leftVal, rightVal;
+
+    switch(left->type) {
+        case INT: leftVal = (float)left->value.intValue; break;
+        case FLOAT: leftVal = left->value.floatValue; break;
+        case BOOLEAN: leftVal = (float)left->value.boolValue; break;
+        default:
+            fprintf(stderr, "Error on line %d: Cannot compare string values\n", currentLineNumber);
+            exit(EXIT_FAILURE);
+    }
+
+    switch(right->type) {
+        case INT: rightVal = (float)right->value.intValue; break;
+        case FLOAT: rightVal = right->value.floatValue; break;
+        case BOOLEAN: rightVal = (float)right->value.boolValue; break;
+        default:
+            fprintf(stderr, "Error on line %d: Cannot compare string values\n", currentLineNumber);
+            exit(EXIT_FAILURE);
+    }
+
+    if (strcmp(operator, ">") == 0) {
+        result.value.boolValue = leftVal > rightVal;
+    } else if (strcmp(operator, "<") == 0) {
+        result.value.boolValue = leftVal < rightVal;
+    } else if (strcmp(operator, ">=") == 0) {
+        result.value.boolValue = leftVal >= rightVal;
+    } else if (strcmp(operator, "<=") == 0) {
+        result.value.boolValue = leftVal <= rightVal;
+    } else if (strcmp(operator, "==") == 0) {
+        result.value.boolValue = leftVal == rightVal;
+    }
+
+    return result;
+}
+
 Variable *evaluateExpression(const char *expr) {
     char *trimmed = strdup(expr);
     char *ptr = trimmed;
     
     while (*ptr == ' ' || *ptr == '\t') ptr++;
+
+    // First check for comparison operators
+    char *gtOp = strstr(ptr, ">=");
+    char *ltOp = strstr(ptr, "<=");
+    char *eqOp = strstr(ptr, "==");
+    char *gt = strstr(ptr, ">");
+    char *lt = strstr(ptr, "<");
+    
+    char *op = NULL;
+    const char *opStr = NULL;
+    int opLen = 1;
+
+    // Find the leftmost operator
+    if (gtOp && (!op || gtOp < op)) { op = gtOp; opStr = ">="; opLen = 2; }
+    if (ltOp && (!op || ltOp < op)) { op = ltOp; opStr = "<="; opLen = 2; }
+    if (eqOp && (!op || eqOp < op)) { op = eqOp; opStr = "=="; opLen = 2; }
+    if (gt && (!op || gt < op) && (gt != gtOp)) { op = gt; opStr = ">"; opLen = 1; }
+    if (lt && (!op || lt < op) && (lt != ltOp)) { op = lt; opStr = "<"; opLen = 1; }
+
+    if (op) {
+        *op = '\0';
+        char *leftStr = ptr;
+        char *rightStr = op + opLen;
+
+        Variable *left = evaluateExpression(leftStr);
+        Variable *right = evaluateExpression(rightStr);
+
+        if (left && right) {
+            Variable *result = malloc(sizeof(Variable));
+            *result = performComparison(left, right, opStr);
+            free(left);
+            free(right);
+            free(trimmed);
+            return result;
+        }
+        if (left) free(left);
+        if (right) free(right);
+        free(trimmed);
+        return NULL;
+    }
 
     // Check for NOT operator first
     if (strncmp(ptr, "NOT ", 4) == 0) {
@@ -197,8 +285,8 @@ Variable *evaluateExpression(const char *expr) {
     // Check for AND/OR operators
     char *andOp = strstr(ptr, " AND ");
     char *orOp = strstr(ptr, " OR ");
-    char *op = NULL;
-    const char *opStr = NULL;
+    op = NULL;
+    opStr = NULL;
 
     if (andOp && (!orOp || andOp < orOp)) {
         op = andOp;

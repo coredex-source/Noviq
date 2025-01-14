@@ -131,6 +131,11 @@ a) Supported Operators:
    AND - Logical AND
    OR  - Logical OR
    NOT - Logical NOT
+   >   - Greater than
+   <   - Less than
+   >=  - Greater than or equal
+   <=  - Less than or equal
+   ==  - Equal to
 
 b) Usage:
    Syntax: result = operand1 operator operand2
@@ -138,6 +143,9 @@ b) Usage:
    isTrue = true AND false    // Results in false
    isTrue = true OR false     // Results in true
    isTrue = NOT true          // Results in false
+   isTrue = 5 > 3            // Results in true
+   isTrue = 5 <= 5           // Results in true
+   isTrue = 4 == 4           // Results in true
 
 c) Type Conversion Rules:
    - Numbers: 0 is false, any other value is true

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v1.1"
+#define LITECODE_VERSION "prealpha-v1.2"
 
 #ifdef _WIN32
 // Windows implementation of getline
