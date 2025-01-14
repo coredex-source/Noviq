@@ -1,9 +1,10 @@
+
 x = 5
 y = "Sam"
 a = 10.22
 b = false
 display("Hello, World!")
-display("LiteCode is running!")
+display("Noviq is running!")
 display("Variable display: %var1 %var2 %var3 %var4",x,y,a,b)
 display("%var1",a+x)
 display("%var1",a*x)

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v1.3"
+#define LITECODE_VERSION "prealpha-v1.4"
 
 #ifdef _WIN32
 // Windows implementation of getline
@@ -62,20 +62,20 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
 #endif
 
 void displayHelp(const char *programName) {
-    printf("LiteCode Interpreter\n");
+    printf("Noviq Interpreter\n");
     printf("Usage: %s [options] or %s -e <filename>\n\n", programName, programName);
     printf("Options:\n");
-    printf("  -e <filename>    Execute a LiteCode script file\n");
+    printf("  -e <filename>    Execute a Noviq script file\n");
     printf("  --help          Display this help message\n");
-    printf("  --version       Display LiteCode version\n");
+    printf("  --version       Display Noviq version\n");
 }
 
 // Function to read and execute commands from a file
 void executeFile(const char *filename) {
     // Check file extension
     const char *dot = strrchr(filename, '.');
-    if (!dot || strcmp(dot, ".lc") != 0) {
-        fprintf(stderr, "Error: File must have .lc extension\n");
+    if (!dot || strcmp(dot, ".nvq") != 0) {
+        fprintf(stderr, "Error: File must have .nvq extension\n");
         exit(EXIT_FAILURE);
     }
 

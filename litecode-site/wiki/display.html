@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display System - Noviq Documentation</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Noviq</div>
+        <div class="nav-links">
+            <a href="../index.html">Home</a>
+            <a href="introduction.html" class="active">Documentation</a>
+            <a href="https://github.com/coredex-source/noviq">GitHub</a>
+        </div>
+    </nav>
+
+    <div class="wiki-container">
+        <aside class="sidebar">
+            <h3>Documentation</h3>
+            <ul>
+                <li><a href="introduction.html">Introduction</a></li>
+                <li><a href="variables.html">Variable System</a></li>
+                <li><a href="display.html" class="active">Display System</a></li>
+                <li><a href="strings.html">String Formatting</a></li>
+                <li><a href="syntax.html">Syntax Rules</a></li>
+                <li><a href="errors.html">Error Handling</a></li>
+                <li><a href="arithmetic.html">Arithmetic Operations</a></li>
+                <li><a href="logical.html">Logical Operations</a></li>
+            </ul>
+        </aside>
+
+        <main class="content">
+            <h1>Display System</h1>
+            
+            <h2>Direct Display</h2>
+            <div class="code-example">
+                <pre><code class="language-noviq">
+display("Hello, World!")  # String output
+display(42)              # Number output
+                </code></pre>
+            </div>
+
+            <h2>Variable Display</h2>
+            <p>Uses %var[n] format where n is the variable position (1-based)</p>
+            <div class="code-example">
+                <pre><code class="language-noviq">
+x = 42
+display("%var1", x)  # Shows value of x
+                </code></pre>
+            </div>
+
+            <h2>Multiple Variable Display</h2>
+            <div class="code-example">
+                <pre><code class="language-noviq">
+age = 25
+name = "John"
+display("Age: %var1, Name: %var2", age, name)
+                </code></pre>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Noviq. All rights reserved.</p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+</body>
+</html>

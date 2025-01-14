@@ -1,5 +1,5 @@
 all:
-	gcc -o litecode litecode.c lexer/lexer_interpret.c lexer/lexer_display.c -lm
+	gcc -o noviq noviq.c lexer/lexer_interpret.c lexer/lexer_display.c -lm
 
 clean:
-	rm -f litecode
+	rm -f noviq

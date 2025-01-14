@@ -1,4 +1,4 @@
-name: Build LiteCode
+name: Build Noviq
 
 on:
   push:
@@ -46,22 +46,22 @@ jobs:
     - name: Build (Windows)
       if: runner.os == 'Windows'
       run: |
-        gcc -o litecode.exe litecode.c lexer/lexer_interpret.c lexer/lexer_display.c
+        gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c
 
     - name: Upload artifact (Windows/Linux)
       if: runner.os != 'macOS'
       uses: actions/upload-artifact@v4
       with:
-        name: litecode-${{ runner.os }}
+        name: noviq-${{ runner.os }}
         path: |
-          litecode*
+          noviq*
         if-no-files-found: error
 
     - name: Upload artifact (macOS)
       if: runner.os == 'macOS'
       uses: actions/upload-artifact@v4
       with:
-        name: litecode-${{ runner.os }}-${{ matrix.arch }}
+        name: noviq-${{ runner.os }}-${{ matrix.arch }}
         path: |
-          litecode
+          noviq
         if-no-files-found: error

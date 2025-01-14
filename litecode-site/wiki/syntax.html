@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syntax Rules - Noviq Documentation</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Noviq</div>
+        <div class="nav-links">
+            <a href="../index.html">Home</a>
+            <a href="introduction.html" class="active">Documentation</a>
+            <a href="https://github.com/coredex-source/noviq">GitHub</a>
+        </div>
+    </nav>
+
+    <div class="wiki-container">
+        <aside class="sidebar">
+            <h3>Documentation</h3>
+            <ul>
+                <li><a href="introduction.html">Introduction</a></li>
+                <li><a href="variables.html">Variable System</a></li>
+                <li><a href="display.html">Display System</a></li>
+                <li><a href="strings.html">String Formatting</a></li>
+                <li><a href="syntax.html" class="active">Syntax Rules</a></li>
+                <li><a href="errors.html">Error Handling</a></li>
+                <li><a href="arithmetic.html">Arithmetic Operations</a></li>
+                <li><a href="logical.html">Logical Operations</a></li>
+            </ul>
+        </aside>
+
+        <main class="content">
+            <h1>Syntax Rules</h1>
+            
+            <h2>Variable Rules</h2>
+            <ul>
+                <li>Must start with letter or underscore</li>
+                <li>Can contain letters, numbers, underscores</li>
+                <li>Case-sensitive</li>
+                <li>No special characters or spaces</li>
+            </ul>
+
+            <div class="code-example">
+                <pre><code class="language-noviq">
+valid_name = 42
+userName = "John"
+_private = true
+                </code></pre>
+            </div>
+
+            <h2>String Rules</h2>
+            <ul>
+                <li>Must use matching quotes ('' or "")</li>
+                <li>Cannot mix quote types</li>
+                <li>Can contain any characters</li>
+            </ul>
+
+            <h2>General Rules</h2>
+            <ul>
+                <li>One command per line</li>
+                <li>No line terminators (semicolons) needed</li>
+                <li>Whitespace is ignored except in strings</li>
+                <li>Empty lines are allowed</li>
+            </ul>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Noviq. All rights reserved.</p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+</body>
+</html>

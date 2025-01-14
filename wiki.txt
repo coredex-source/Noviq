@@ -1,14 +1,14 @@
-LiteCode Language Reference
+Noviq Language Reference
 =========================
 
 1. Introduction
 -------------
-LiteCode is a simple, interpreted programming language designed for readability and ease of use. 
+Noviq is a simple, interpreted programming language designed for readability and ease of use. 
 It supports basic variable types and string formatting capabilities.
 
 2. Variable System
 ----------------
-LiteCode supports four primary variable types:
+Noviq supports four primary variable types:
 a) Integers: Whole numbers (positive or negative)
    Syntax: variableName = number
    Example: count = 42
@@ -47,7 +47,7 @@ c) Multiple Variable Display:
 
 4. String Formatting System
 ------------------------
-LiteCode supports dynamic string creation using variables:
+Noviq supports dynamic string creation using variables:
 
 a) Basic Format:
    Syntax: result = ("format string", var1, var2, ...)
@@ -95,7 +95,7 @@ Each error message includes the line number and details about the error.
 
 7. Arithmetic Operations
 ---------------------
-LiteCode supports basic arithmetic operations for numbers:
+Noviq supports basic arithmetic operations for numbers:
 
 a) Supported Operators:
    + Addition
@@ -125,7 +125,7 @@ c) Rules:
 
 8. Logical Operations
 ------------------
-LiteCode supports basic logical operations:
+Noviq supports basic logical operations:
 
 a) Supported Operators:
    AND or && - Logical AND

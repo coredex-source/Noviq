@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logical Operations - Noviq Documentation</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Noviq</div>
+        <div class="nav-links">
+            <a href="../index.html">Home</a>
+            <a href="introduction.html" class="active">Documentation</a>
+            <a href="https://github.com/coredex-source/noviq">GitHub</a>
+        </div>
+    </nav>
+
+    <div class="wiki-container">
+        <aside class="sidebar">
+            <h3>Documentation</h3>
+            <ul>
+                <li><a href="introduction.html">Introduction</a></li>
+                <li><a href="variables.html">Variable System</a></li>
+                <li><a href="display.html">Display System</a></li>
+                <li><a href="strings.html">String Formatting</a></li>
+                <li><a href="syntax.html">Syntax Rules</a></li>
+                <li><a href="errors.html">Error Handling</a></li>
+                <li><a href="arithmetic.html">Arithmetic Operations</a></li>
+                <li><a href="logical.html" class="active">Logical Operations</a></li>
+            </ul>
+        </aside>
+
+        <main class="content">
+            <h1>Logical Operations</h1>
+            
+            <h2>Supported Operators</h2>
+            <div class="operators-table">
+                <table>
+                    <tr>
+                        <td><code>AND</code> or <code>&&</code></td>
+                        <td>Logical AND</td>
+                    </tr>
+                    <tr>
+                        <td><code>OR</code> or <code>||</code></td>
+                        <td>Logical OR</td>
+                    </tr>
+                    <tr>
+                        <td><code>NOT</code> or <code>!</code></td>
+                        <td>Logical NOT</td>
+                    </tr>
+                    <tr>
+                        <td><code>></code>, <code><</code></td>
+                        <td>Greater/Less than</td>
+                    </tr>
+                    <tr>
+                        <td><code>>=</code>, <code><=</code></td>
+                        <td>Greater/Less than or equal</td>
+                    </tr>
+                    <tr>
+                        <td><code>==</code></td>
+                        <td>Equal to</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h2>Boolean Operations</h2>
+            <div class="code-example">
+                <pre><code class="language-noviq">
+# Basic logical operations
+result = true AND false    # Results in false
+result = true && false     # Alternative syntax
+result = true OR false     # Results in true
+result = NOT true          # Results in false</code></pre>
+            </div>
+
+            <h2>Comparison Operations</h2>
+            <div class="code-example">
+                <pre><code class="language-noviq">
+# Number comparisons
+x = 5
+y = 10
+isLess = x < y          # true
+isEqual = x == y        # false
+isGreater = x > y      # false
+                </code></pre>
+            </div>
+
+            <h2>Type Conversion Rules</h2>
+            <ul>
+                <li>Numbers: 0 is false, any other value is true</li>
+                <li>Strings: Empty string is false, non-empty is true</li>
+                <li>Booleans: Used directly</li>
+                <li>Results are always boolean type</li>
+            </ul>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Noviq. All rights reserved.</p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+</body>
+</html>

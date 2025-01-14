@@ -1,8 +1,10 @@
-# Litecode
-Just a simple interpreter based programming language written in C.
+# Noviq
+The name Noviq is make up of two words: Nova(which means new) and unique.
+So, Nova + unique = Noviq.
+Noviq is just a simple interpreter based programming language written in C.
 
 ## Wiki
-[Click Here To Go To The Wiki](https://github.com/coredex-source/litecode/blob/main/wiki.txt)
+[Click Here To Go To The Wiki](https://github.com/coredex-source/noviq/blob/main/wiki.txt)
 
 ## Building and using
 ### Requirements:
@@ -15,14 +17,14 @@ make all
 ```
 - Windows
 ```
-gcc -o litecode.exe litecode.c lexer/lexer_interpret.c lexer/lexer_display.c
+gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c
 ```
 ### Run using:
 - MacOS/Linux:
 ```
-./litecode -e filename.lc
+./noviq -e filename.lc
 ```
 - Windows:
 ```
-litecode.exe -e filename.lc
+noviq.exe -e filename.lc
 ```
