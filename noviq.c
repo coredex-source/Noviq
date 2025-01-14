@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v1.4"
+#define LITECODE_VERSION "prealpha-v1.5"
 
 #ifdef _WIN32
 // Windows implementation of getline
@@ -89,6 +89,7 @@ void executeFile(const char *filename) {
     size_t len = 0;
     ssize_t read;
     int lineNumber = 0;
+    int inMultilineComment = 0;
 
     while ((read = getline(&line, &len, file)) != -1) {
         lineNumber++;
@@ -101,7 +102,41 @@ void executeFile(const char *filename) {
         while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
         if (*trimmed == '\0') continue;
 
-        interpretCommand(line, lineNumber);
+        // Handle multi-line comments first
+        char *stripped = trimmed;
+        while (*stripped == ' ' || *stripped == '\t') stripped++;
+        
+        // Check for exactly "##" with optional whitespace
+        if (strncmp(stripped, "##", 2) == 0) {
+            char *rest = stripped + 2;
+            while (*rest == ' ' || *rest == '\t') rest++;
+            if (*rest == '\0') {  // Only toggle if ## is alone on the line
+                inMultilineComment = !inMultilineComment;
+                continue;
+            }
+        }
+        
+        // Skip everything if we're inside a multiline comment
+        if (inMultilineComment) continue;
+
+        // Handle single-line comments after multiline comment check
+        if (strncmp(trimmed, "#", 1) == 0) continue;
+
+        // Process single-line comments at end of line
+        char *commentStart = strstr(trimmed, "#");
+        if (commentStart != NULL) {
+            *commentStart = '\0';
+            while (commentStart > trimmed && (*(commentStart-1) == ' ' || *(commentStart-1) == '\t')) {
+                commentStart--;
+            }
+            *commentStart = '\0';
+            if (*trimmed == '\0') continue;
+        }
+
+        // Only interpret non-empty lines that aren't comments
+        if (*trimmed) {
+            interpretCommand(trimmed, lineNumber);
+        }
     }
 
     free(line);

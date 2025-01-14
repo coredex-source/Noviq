@@ -152,3 +152,36 @@ c) Type Conversion Rules:
    - Strings: Empty string is false, non-empty is true
    - Booleans: Used directly
    - Results are always boolean type
+
+9. Comments
+---------
+Noviq supports two types of comments:
+
+a) Single-line Comments:
+   Syntax: # comment text
+   Example: x = 5 # This sets x to 5
+   - Everything after # on a line is ignored
+   - Can be used at the end of code lines
+   - Can be used for full-line comments
+
+b) Multi-line Comments:
+   Syntax: ## text ##
+   Example:
+   ##
+   This is a multi-line comment
+   It can span multiple lines
+   The interpreter ignores everything between the markers
+   ##
+   
+   - Uses ## markers
+   - Must be on lines by themselves (whitespace allowed)
+   - Can span any number of lines
+   - Cannot be nested
+   - Useful for temporarily disabling blocks of code
+
+c) Comment Rules:
+   - Comments cannot be nested
+   - Multi-line comment markers must be on their own lines
+   - Single-line comments can appear anywhere on a line
+   - Code after a comment marker on the same line is ignored
+   - Comments do not affect line numbering for error reporting
