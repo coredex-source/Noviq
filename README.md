@@ -22,9 +22,9 @@ gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c
 ### Run using:
 - MacOS/Linux:
 ```
-./noviq -e filename.lc
+./noviq -e filename.nvq
 ```
 - Windows:
 ```
-noviq.exe -e filename.lc
+noviq.exe -e filename.nvq
 ```
