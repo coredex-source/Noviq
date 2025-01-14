@@ -4,7 +4,7 @@
 - Noviq is just a simple interpreter based programming language written in C.
 
 ## Wiki
-[Click Here To Go To The Wiki](https://github.com/coredex-source/noviq/blob/main/wiki.txt)
+[Click Here To Go To The Wiki](https://coredex-source.github.io/Noviq-site/wiki/introduction.html)
 
 ## Building and using
 ### Requirements:
