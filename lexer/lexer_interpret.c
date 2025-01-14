@@ -77,7 +77,10 @@ int isOperator(char c) {
 int isLogicalOperator(const char *str) {
     return (strcmp(str, "AND") == 0 || 
             strcmp(str, "OR") == 0 || 
-            strcmp(str, "NOT") == 0);
+            strcmp(str, "NOT") == 0 ||
+            strcmp(str, "&&") == 0 ||
+            strcmp(str, "||") == 0 ||
+            strcmp(str, "!") == 0);
 }
 
 int isComparisonOperator(const char *str) {
@@ -270,9 +273,9 @@ Variable *evaluateExpression(const char *expr) {
         return NULL;
     }
 
-    // Check for NOT operator first
-    if (strncmp(ptr, "NOT ", 4) == 0) {
-        Variable *operand = evaluateExpression(ptr + 4);
+    // Check for NOT/! operator first
+    if (strncmp(ptr, "NOT ", 4) == 0 || strncmp(ptr, "! ", 2) == 0 || ptr[0] == '!') {
+        Variable *operand = evaluateExpression(ptr + (ptr[0] == 'N' ? 4 : (ptr[0] == '!' && ptr[1] == ' ' ? 2 : 1)));
         if (operand) {
             Variable *result = malloc(sizeof(Variable));
             *result = performLogicalOperation(operand, NULL, "NOT");
@@ -282,24 +285,28 @@ Variable *evaluateExpression(const char *expr) {
         }
     }
 
-    // Check for AND/OR operators
+    // Check for AND/OR/&&/|| operators
     char *andOp = strstr(ptr, " AND ");
     char *orOp = strstr(ptr, " OR ");
+    char *andSymbolOp = strstr(ptr, "&&");
+    char *orSymbolOp = strstr(ptr, "||");
     op = NULL;
     opStr = NULL;
+    opLen = 0;
 
-    if (andOp && (!orOp || andOp < orOp)) {
-        op = andOp;
-        opStr = "AND";
-    } else if (orOp) {
-        op = orOp;
-        opStr = "OR";
-    }
+    // Find the leftmost operator
+    if (andOp && (!op || andOp < op)) { op = andOp; opStr = "AND"; opLen = 5; }
+    if (orOp && (!op || orOp < op)) { op = orOp; opStr = "OR"; opLen = 4; }
+    if (andSymbolOp && (!op || andSymbolOp < op)) { op = andSymbolOp; opStr = "AND"; opLen = 2; }
+    if (orSymbolOp && (!op || orSymbolOp < op)) { op = orSymbolOp; opStr = "OR"; opLen = 2; }
 
     if (op) {
         *op = '\0';
         char *leftStr = ptr;
-        char *rightStr = op + strlen(opStr) + 2; // Skip operator and spaces
+        char *rightStr = op + opLen;
+
+        // Trim spaces around operators
+        while (*rightStr == ' ') rightStr++;
 
         Variable *left = evaluateExpression(leftStr);
         Variable *right = evaluateExpression(rightStr);

@@ -128,9 +128,9 @@ c) Rules:
 LiteCode supports basic logical operations:
 
 a) Supported Operators:
-   AND - Logical AND
-   OR  - Logical OR
-   NOT - Logical NOT
+   AND or && - Logical AND
+   OR  or || - Logical OR
+   NOT or !  - Logical NOT
    >   - Greater than
    <   - Less than
    >=  - Greater than or equal
@@ -141,11 +141,11 @@ b) Usage:
    Syntax: result = operand1 operator operand2
    Examples:
    isTrue = true AND false    // Results in false
+   isTrue = true && false     // Results in false
    isTrue = true OR false     // Results in true
+   isTrue = true || false     // Results in true
    isTrue = NOT true          // Results in false
-   isTrue = 5 > 3            // Results in true
-   isTrue = 5 <= 5           // Results in true
-   isTrue = 4 == 4           // Results in true
+   isTrue = !true            // Results in false
 
 c) Type Conversion Rules:
    - Numbers: 0 is false, any other value is true
