@@ -611,6 +611,7 @@ void executeBlock(const char *line, FILE *file) {
     char *nextLine = NULL;
     size_t len = 0;
     ssize_t read;
+    int blockStartLine = currentLineNumber;  // Remember where block started
 
     // Get initial indent level
     read = getline(&nextLine, &len, file);
@@ -626,13 +627,15 @@ void executeBlock(const char *line, FILE *file) {
     // Process first line
     if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
     if (!blockState.skipNextBlock) {
-        interpretCommand(nextLine + baseIndent, currentLineNumber++);
+        interpretCommand(nextLine + baseIndent, blockStartLine + 1);
     }
     free(nextLine);
     nextLine = NULL;
 
     // Process rest of block
     while ((read = getline(&nextLine, &len, file)) != -1) {
+        blockStartLine++;  // Track lines within the block
+        
         if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
         
         // Count indentation
@@ -645,12 +648,13 @@ void executeBlock(const char *line, FILE *file) {
             for (int i = strlen(nextLine) - 1; i >= 0; i--) {
                 ungetc(nextLine[i], file);
             }
+            currentLineNumber = blockStartLine;  // Update global line counter
             break;
         }
         
         // Execute the line if indentation matches and we're not skipping
         if (indent == baseIndent && !blockState.skipNextBlock) {
-            interpretCommand(nextLine + indent, currentLineNumber++);
+            interpretCommand(nextLine + indent, blockStartLine + 1);
         }
     }
     
