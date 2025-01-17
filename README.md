@@ -1,3 +1,7 @@
+```diff
+@@ The language is currently in PreAlpha development stages. @@
+@@ A lot of missing features and bugs are to be expected.    @@
+```
 # Noviq
 - The name Noviq is make up of two words: Nova(which means new) and unique.
 - So, Nova + unique = Noviq.
