@@ -64,9 +64,13 @@ b = 3
 if(a > 0):
     if(b > 0):
         display("Both a and b are positive")
+    elseif(b == 0):
+        display("a is positive, b is zero")
     else:
         display("Only a is positive")
+elseif(a == 0):
+    display("a is zero")
 else:
-    display("a is not positive")
+    display("a is negative")
 
 # End of test file

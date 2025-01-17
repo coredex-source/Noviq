@@ -454,14 +454,19 @@ Variable *evaluateExpression(const char *expr) {
 void interpretCommand(const char *command, int lineNumber) {
     currentLineNumber = lineNumber;  // Set the current line number
 
+    // Skip empty lines or lines with only whitespace
+    const char *trimmed = command;
+    while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
+    if (*trimmed == '\0') return;
+
     // Add if statement handling at the start
-    if (strncmp(command, "if(", 3) == 0) {
+    if (strncmp(trimmed, "if(", 3) == 0) {
         // Don't handle if statements here, they're handled by executeFile
         return;
     }
 
     // Handle display command
-    if (strncmp(command, "display(", 8) == 0) {
+    if (strncmp(trimmed, "display(", 8) == 0) {
         const char *closingParenthesis = strchr(command + 8, ')');
         if (closingParenthesis) {
             char *content = (char *)malloc(closingParenthesis - (command + 8) + 1);
@@ -506,7 +511,7 @@ void interpretCommand(const char *command, int lineNumber) {
             printf("Syntax error on line %d: missing closing parenthesis\n", lineNumber);
             exit(EXIT_FAILURE);
         }
-    } else if (strchr(command, '=') != NULL) {
+    } else if (strchr(trimmed, '=') != NULL) {
         char *equalsSign = strchr(command, '=');
         size_t nameLength = equalsSign - command;
         char *name = (char *)malloc(nameLength + 1);
@@ -535,38 +540,41 @@ void interpretCommand(const char *command, int lineNumber) {
         if (result) {
             if (result->type == FLOAT) {
                 float floatVal = result->value.floatValue;
-                addVariable(name, FLOAT, &floatVal);
-            } else {
+                updateVariable(name, FLOAT, &floatVal);
+            } else if (result->type == INT) {
                 int intVal = result->value.intValue;
-                addVariable(name, INT, &intVal);
+                updateVariable(name, INT, &intVal);
+            } else if (result->type == BOOLEAN) {
+                int boolVal = result->value.boolValue;
+                updateVariable(name, BOOLEAN, &boolVal);
             }
             free(result);
         } else {
             // Handle non-expression assignments
             if (strcmp(value, "true") == 0) {
                 int boolValue = 1;
-                addVariable(name, BOOLEAN, &boolValue);
+                updateVariable(name, BOOLEAN, &boolValue);
             } else if (strcmp(value, "false") == 0) {
                 int boolValue = 0;
-                addVariable(name, BOOLEAN, &boolValue);
+                updateVariable(name, BOOLEAN, &boolValue);
             } else if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
                 if (isFloat(value)) {
                     float floatValue = parseFloat(value);
-                    addVariable(name, FLOAT, &floatValue);
+                    updateVariable(name, FLOAT, &floatValue);
                 } else {
                     int intValue = atoi(value);
-                    addVariable(name, INT, &intValue);
+                    updateVariable(name, INT, &intValue);
                 }
             } else if (value[0] == '"' || value[0] == '\'') {
                 size_t valueLength = strlen(value);
                 value[valueLength - 1] = '\0';
-                addVariable(name, STRING, value + 1);
+                updateVariable(name, STRING, value + 1);
             }
         }
 
         free(name);
     } else {
-        printf("Unknown command on line %d: %s\n", lineNumber, command);
+        printf("Unknown command on line %d: %s\n", currentLineNumber, trimmed);
         exit(EXIT_FAILURE);
     }
 }
@@ -598,27 +606,30 @@ typedef struct {
     int lastConditionMet;
     int inControlBlock;
     int skipNextBlock;  // Add flag to skip blocks after condition is met
+    int nestingLevel;
 } BlockState;
 
+// Update BlockState initialization
 BlockState blockState = {
     .indentLevel = 0,
     .lastConditionMet = 0,
     .inControlBlock = 0,
-    .skipNextBlock = 0
+    .skipNextBlock = 0,
+    .nestingLevel = 0
 };
 
 void executeBlock(const char *line, FILE *file) {
     char *nextLine = NULL;
     size_t len = 0;
     ssize_t read;
-    int blockStartLine = currentLineNumber;  // Remember where block started
+    int currentNestLevel = blockState.nestingLevel;
 
-    // Get initial indent level
     read = getline(&nextLine, &len, file);
     if (read == -1) {
         free(nextLine);
         return;
     }
+    currentLineNumber++;  // Increment line counter for each line read
 
     // Count initial indentation
     int baseIndent = 0;
@@ -627,42 +638,56 @@ void executeBlock(const char *line, FILE *file) {
     // Process first line
     if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
     if (!blockState.skipNextBlock) {
-        interpretCommand(nextLine + baseIndent, blockStartLine + 1);
+        // Check if this is another control statement
+        if (strncmp(nextLine + baseIndent, "if(", 3) == 0 ||
+            strncmp(nextLine + baseIndent, "elseif(", 7) == 0 ||
+            strcmp(nextLine + baseIndent, "else:") == 0) {
+            blockState.nestingLevel++;
+            handleIfStatement(nextLine + baseIndent, file);
+        } else {
+            interpretCommand(nextLine + baseIndent, currentLineNumber);
+        }
     }
     free(nextLine);
     nextLine = NULL;
 
-    // Process rest of block
     while ((read = getline(&nextLine, &len, file)) != -1) {
-        blockStartLine++;  // Track lines within the block
+        currentLineNumber++;  // Increment line counter for each line read
         
         if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
         
-        // Count indentation
         int indent = 0;
         while (nextLine[indent] == ' ' || nextLine[indent] == '\t') indent++;
         
-        // If we hit a line with less indentation, we're done
         if (indent < baseIndent) {
             ungetc('\n', file);
             for (int i = strlen(nextLine) - 1; i >= 0; i--) {
                 ungetc(nextLine[i], file);
             }
-            currentLineNumber = blockStartLine;  // Update global line counter
+            currentLineNumber--;  // Decrement because we're putting this line back
             break;
         }
         
-        // Execute the line if indentation matches and we're not skipping
         if (indent == baseIndent && !blockState.skipNextBlock) {
-            interpretCommand(nextLine + indent, blockStartLine + 1);
+            char *line = nextLine + indent;
+            if (strncmp(line, "if(", 3) == 0 ||
+                strncmp(line, "elseif(", 7) == 0 ||
+                strcmp(line, "else:") == 0) {
+                blockState.nestingLevel++;
+                handleIfStatement(line, file);
+            } else {
+                interpretCommand(line, currentLineNumber);
+            }
         }
     }
     
+    blockState.nestingLevel = currentNestLevel;
     free(nextLine);
 }
 
 void handleIfStatement(const char *line, FILE *file) {
     char condition[256];
+    int currentNestLevel = blockState.nestingLevel;
     
     if (strncmp(line, "if(", 3) == 0) {
         if (sscanf(line, "if(%[^)]):", condition) != 1) {
@@ -696,7 +721,36 @@ void handleIfStatement(const char *line, FILE *file) {
         }
         blockState.skipNextBlock = blockState.lastConditionMet;
         executeBlock(line, file);
-        blockState.inControlBlock = 0;
-        blockState.lastConditionMet = 0;
+        if (currentNestLevel == 0) {
+            blockState.inControlBlock = 0;
+            blockState.lastConditionMet = 0;
+        }
     }
+}
+
+void updateVariable(const char *name, VarType type, void *value) {
+    for (size_t i = 0; i < variableCount; i++) {
+        if (strcmp(variables[i].name, name) == 0) {
+            // Free existing string if needed
+            if (variables[i].type == STRING && variables[i].value.stringValue) {
+                free(variables[i].value.stringValue);
+            }
+            
+            // Update type and value
+            variables[i].type = type;
+            if (type == STRING) {
+                variables[i].value.stringValue = strdup((char *)value);
+            } else if (type == INT) {
+                variables[i].value.intValue = *(int *)value;
+            } else if (type == FLOAT) {
+                variables[i].value.floatValue = *(float *)value;
+            } else if (type == BOOLEAN) {
+                variables[i].value.boolValue = *(int *)value;
+            }
+            return;
+        }
+    }
+    
+    // If variable not found, add it
+    addVariable(name, type, value);
 }

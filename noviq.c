@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v1.7"
+#define LITECODE_VERSION "prealpha-v2.0"
 
 #ifdef _WIN32
 // Windows implementation of getline
@@ -88,10 +88,12 @@ void executeFile(const char *filename) {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    currentLineNumber = 1;  // Start at line 1
+    currentLineNumber = 0;
     int inMultilineComment = 0;
-
+    
     while ((read = getline(&line, &len, file)) != -1) {
+        currentLineNumber++;  // Increment at start of each line
+        
         if (line[read - 1] == '\n') {
             line[read - 1] = '\0';
         }
@@ -100,23 +102,20 @@ void executeFile(const char *filename) {
         char *trimmed = line;
         while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
         if (*trimmed == '\0') {
-            currentLineNumber++;
             continue;
         }
 
-        // Handle comments without changing line number
+        // Handle comments
         if (strncmp(trimmed, "##", 2) == 0) {
             inMultilineComment = !inMultilineComment;
-            currentLineNumber++;
             continue;
         }
         
         if (inMultilineComment || strncmp(trimmed, "#", 1) == 0) {
-            currentLineNumber++;
             continue;
         }
 
-        // Process single-line comments at end of line
+        // Process single-line comments
         char *commentStart = strstr(trimmed, "#");
         if (commentStart != NULL) {
             *commentStart = '\0';
@@ -125,12 +124,11 @@ void executeFile(const char *filename) {
             }
             *commentStart = '\0';
             if (*trimmed == '\0') {
-                currentLineNumber++;
                 continue;
             }
         }
 
-        // Only interpret non-empty lines that aren't comments
+        // Execute the line
         if (*trimmed) {
             if (strncmp(trimmed, "if(", 3) == 0 || 
                 strncmp(trimmed, "elseif(", 7) == 0 || 
@@ -139,9 +137,7 @@ void executeFile(const char *filename) {
             } else {
                 interpretCommand(trimmed, currentLineNumber);
             }
-            // Let handleIfStatement and interpretCommand manage line numbers
         }
-        currentLineNumber++;
     }
 
     free(line);
