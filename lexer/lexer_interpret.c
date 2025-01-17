@@ -56,10 +56,22 @@ void addVariable(const char *name, VarType type, void *value) {
 // Add helper functions for float parsing
 int isFloat(const char *str) {
     int dots = 0;
-    for (int i = 0; str[i] != '\0'; i++) {
+    int i = 0;
+
+    // Skip leading minus sign
+    if (str[0] == '-') {
+        i++;
+    }
+
+    // String can't be just a minus sign
+    if (str[i] == '\0') {
+        return 0;
+    }
+
+    for (; str[i] != '\0'; i++) {
         if (str[i] == '.') {
             dots++;
-        } else if (!isdigit(str[i]) && (i == 0 && str[i] != '-')) {
+        } else if (!isdigit(str[i])) {
             return 0;
         }
     }
@@ -233,6 +245,21 @@ Variable *evaluateExpression(const char *expr) {
     
     while (*ptr == ' ' || *ptr == '\t') ptr++;
 
+    // Handle single negative number directly
+    if ((*ptr == '-' && isdigit(*(ptr + 1))) && !strchr(ptr + 1, '+') && 
+        !strchr(ptr + 1, '*') && !strchr(ptr + 1, '/') && !strchr(ptr + 1, '%')) {
+        Variable *result = malloc(sizeof(Variable));
+        if (isFloat(ptr)) {
+            result->type = FLOAT;
+            result->value.floatValue = parseFloat(ptr);
+        } else {
+            result->type = INT;
+            result->value.intValue = atoi(ptr);
+        }
+        free(trimmed);
+        return result;
+    }
+
     // First check for comparison operators
     char *gtOp = strstr(ptr, ">=");
     char *ltOp = strstr(ptr, "<=");
@@ -344,7 +371,7 @@ Variable *evaluateExpression(const char *expr) {
 
     if (!op) {
         // First check if it's a simple variable or value
-        if (!strchr(ptr, '+') && !strchr(ptr, '-') && !strchr(ptr, '*') && !strchr(ptr, '/')) {
+        if (!strchr(ptr, '+') && !strchr(ptr, '/') && !strchr(ptr, '*')) {
             Variable *var = findVariable(ptr);
             if (var) {
                 Variable *result = malloc(sizeof(Variable));

@@ -60,7 +60,7 @@ else:
 
 # Testing nested conditions
 a = 5
-b = 3
+b = -3
 if(a > 0):
     if(b > 0):
         display("Both a and b are positive")
