@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v1.5"
+#define LITECODE_VERSION "prealpha-v1.6"
 
 #ifdef _WIN32
 // Windows implementation of getline
@@ -90,6 +90,9 @@ void executeFile(const char *filename) {
     ssize_t read;
     int lineNumber = 0;
     int inMultilineComment = 0;
+    char *block = NULL;
+    int blockIndent = -1;
+    int inControlFlow = 0;
 
     while ((read = getline(&line, &len, file)) != -1) {
         lineNumber++;
@@ -135,7 +138,14 @@ void executeFile(const char *filename) {
 
         // Only interpret non-empty lines that aren't comments
         if (*trimmed) {
-            interpretCommand(trimmed, lineNumber);
+            // Check for control flow statements
+            if (strncmp(trimmed, "if(", 3) == 0 || 
+                strncmp(trimmed, "elseif(", 7) == 0 || 
+                strcmp(trimmed, "else:") == 0) {
+                handleIfStatement(trimmed, file);
+            } else {
+                interpretCommand(trimmed, lineNumber);
+            }
         }
     }
 

@@ -40,4 +40,14 @@ Variable performLogicalOperation(Variable *left, Variable *right, const char *op
 int isComparisonOperator(const char *str);
 Variable performComparison(Variable *left, Variable *right, const char *operator);
 
+// Control flow functions
+typedef struct {
+    char *condition;
+    char *code;
+} ControlBlock;
+
+int evaluateCondition(const char *condition);
+void executeBlock(const char *line, FILE *file);
+void handleIfStatement(const char *line, FILE *file);
+
 #endif // LEXER_INTERPRET_H

@@ -453,6 +453,14 @@ Variable *evaluateExpression(const char *expr) {
 // Function to interpret and execute commands
 void interpretCommand(const char *command, int lineNumber) {
     currentLineNumber = lineNumber;  // Set the current line number
+
+    // Add if statement handling at the start
+    if (strncmp(command, "if(", 3) == 0) {
+        // Don't handle if statements here, they're handled by executeFile
+        return;
+    }
+
+    // Handle display command
     if (strncmp(command, "display(", 8) == 0) {
         const char *closingParenthesis = strchr(command + 8, ')');
         if (closingParenthesis) {
@@ -560,5 +568,131 @@ void interpretCommand(const char *command, int lineNumber) {
     } else {
         printf("Unknown command on line %d: %s\n", lineNumber, command);
         exit(EXIT_FAILURE);
+    }
+}
+
+// Add implementation for control flow handling
+int evaluateCondition(const char *condition) {
+    Variable *result = evaluateExpression(condition);
+    if (!result) return 0;
+    
+    int value;
+    if (result->type == BOOLEAN) {
+        value = result->value.boolValue;
+    } else if (result->type == INT) {
+        value = result->value.intValue != 0;
+    } else if (result->type == FLOAT) {
+        value = result->value.floatValue != 0;
+    } else if (result->type == STRING) {
+        value = strlen(result->value.stringValue) > 0;
+    } else {
+        value = 0;
+    }
+    
+    free(result);
+    return value;
+}
+
+typedef struct {
+    int indentLevel;
+    int lastConditionMet;
+    int inControlBlock;
+    int skipNextBlock;  // Add flag to skip blocks after condition is met
+} BlockState;
+
+BlockState blockState = {
+    .indentLevel = 0,
+    .lastConditionMet = 0,
+    .inControlBlock = 0,
+    .skipNextBlock = 0
+};
+
+void executeBlock(const char *line, FILE *file) {
+    char *nextLine = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    // Get initial indent level
+    read = getline(&nextLine, &len, file);
+    if (read == -1) {
+        free(nextLine);
+        return;
+    }
+
+    // Count initial indentation
+    int baseIndent = 0;
+    while (nextLine[baseIndent] == ' ' || nextLine[baseIndent] == '\t') baseIndent++;
+
+    // Process first line
+    if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
+    if (!blockState.skipNextBlock) {
+        interpretCommand(nextLine + baseIndent, currentLineNumber++);
+    }
+    free(nextLine);
+    nextLine = NULL;
+
+    // Process rest of block
+    while ((read = getline(&nextLine, &len, file)) != -1) {
+        if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
+        
+        // Count indentation
+        int indent = 0;
+        while (nextLine[indent] == ' ' || nextLine[indent] == '\t') indent++;
+        
+        // If we hit a line with less indentation, we're done
+        if (indent < baseIndent) {
+            ungetc('\n', file);
+            for (int i = strlen(nextLine) - 1; i >= 0; i--) {
+                ungetc(nextLine[i], file);
+            }
+            break;
+        }
+        
+        // Execute the line if indentation matches and we're not skipping
+        if (indent == baseIndent && !blockState.skipNextBlock) {
+            interpretCommand(nextLine + indent, currentLineNumber++);
+        }
+    }
+    
+    free(nextLine);
+}
+
+void handleIfStatement(const char *line, FILE *file) {
+    char condition[256];
+    
+    if (strncmp(line, "if(", 3) == 0) {
+        if (sscanf(line, "if(%[^)]):", condition) != 1) {
+            fprintf(stderr, "Error: Invalid if statement syntax\n");
+            return;
+        }
+        blockState.inControlBlock = 1;
+        blockState.lastConditionMet = evaluateCondition(condition);
+        blockState.skipNextBlock = !blockState.lastConditionMet;
+        executeBlock(line, file);
+    }
+    else if (strncmp(line, "elseif(", 7) == 0) {
+        if (!blockState.inControlBlock) {
+            fprintf(stderr, "Error: elseif without if\n");
+            return;
+        }
+        if (blockState.lastConditionMet) {
+            blockState.skipNextBlock = 1;
+        } else {
+            if (sscanf(line, "elseif(%[^)]):", condition) == 1) {
+                blockState.lastConditionMet = evaluateCondition(condition);
+                blockState.skipNextBlock = !blockState.lastConditionMet;
+            }
+        }
+        executeBlock(line, file);
+    }
+    else if (strcmp(line, "else:") == 0) {
+        if (!blockState.inControlBlock) {
+            fprintf(stderr, "Error: else without if\n");
+            return;
+        }
+        blockState.skipNextBlock = blockState.lastConditionMet;
+        executeBlock(line, file);
+        blockState.inControlBlock = 0;
+        blockState.lastConditionMet = 0;
     }
 }
