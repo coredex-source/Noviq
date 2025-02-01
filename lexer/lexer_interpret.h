@@ -50,5 +50,7 @@ int evaluateCondition(const char *condition);
 void executeBlock(const char *line, FILE *file);
 void handleIfStatement(const char *line, FILE *file);
 void updateVariable(const char *name, VarType type, void *value);
+void parseImportStatement(const char *line, char *varName, char *fileName);
+void importVariableFromFile(const char *fileName, const char *varName);
 
 #endif // LEXER_INTERPRET_H

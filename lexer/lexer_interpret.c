@@ -486,9 +486,11 @@ void interpretCommand(const char *command, int lineNumber) {
     while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
     if (*trimmed == '\0') return;
 
-    // Add if statement handling at the start
-    if (strncmp(trimmed, "if(", 3) == 0) {
-        // Don't handle if statements here, they're handled by executeFile
+    if (strncmp(trimmed, "import", 6) == 0) {
+        char varName[256];
+        char fileName[256];
+        parseImportStatement(trimmed, varName, fileName);
+        importVariableFromFile(fileName, varName);
         return;
     }
 
@@ -500,12 +502,11 @@ void interpretCommand(const char *command, int lineNumber) {
             strncpy(content, command + 8, closingParenthesis - (command + 8));
             content[closingParenthesis - (command + 8)] = '\0';
 
-            // First check if it's a formatted string (starts with quote and contains %var)
-            if (content[0] == '"' && strstr(content, "%var") != NULL && strchr(content, ',') != NULL) {
+            if (strstr(content, "%var") != NULL && strchr(content, ',') != NULL) {
                 char *format = strtok(content, ",");
-                format[strlen(format)-1] = '\0';
+                format[strlen(format) - 1] = '\0';
                 format++;
-                
+
                 // Parse variables
                 char *vars[10];  // Maximum 10 variables
                 int varCount = 0;
@@ -514,7 +515,7 @@ void interpretCommand(const char *command, int lineNumber) {
                     while (*var == ' ') var++;  // Skip leading spaces
                     vars[varCount++] = var;
                 }
-                
+
                 displayFormatted(format, vars, varCount);
             } else {
                 // Handle regular display cases
@@ -524,9 +525,9 @@ void interpretCommand(const char *command, int lineNumber) {
                     displayInt((int)intValue);
                 } else if (isFloat(content)) {
                     displayFloat(parseFloat(content));
-                } else if ((content[0] == '"' && content[strlen(content)-1] == '"') || 
-                          (content[0] == '\'' && content[strlen(content)-1] == '\'')) {
-                    content[strlen(content)-1] = '\0';
+                } else if ((content[0] == '"' && content[strlen(content) - 1] == '"') ||
+                          (content[0] == '\'' && content[strlen(content) - 1] == '\'')) {
+                    content[strlen(content) - 1] = '\0';
                     display(content + 1);
                 } else {
                     printf("Syntax error on line %d: invalid format\n", lineNumber);
@@ -560,7 +561,7 @@ void interpretCommand(const char *command, int lineNumber) {
         }
 
         char *value = equalsSign + 1;
-        while (*value == ' ') value++; // Skip leading spaces
+        while (*value == ' ') value++;
 
         // Check for arithmetic expression first
         Variable *result = evaluateExpression(value);
@@ -780,4 +781,43 @@ void updateVariable(const char *name, VarType type, void *value) {
     
     // If variable not found, add it
     addVariable(name, type, value);
+}
+
+void parseImportStatement(const char *line, char *varName, char *fileName) {
+    // example: "import var from "file.nvq""
+    sscanf(line, "import %s from \"%[^\"]\"", varName, fileName);
+}
+
+void importVariableFromFile(const char *fileName, const char *varName) {
+    FILE *file = fopen(fileName, "r");
+    if (!file) {
+        fprintf(stderr, "Error: Could not open file %s\n", fileName);
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        char name[256];
+        char value[256];
+        if (sscanf(line, "%s = %[^\n]", name, value) == 2) {
+            if (strcmp(name, varName) == 0) {
+                if (value[0] == '"' && value[strlen(value) - 1] == '"') {
+                    value[strlen(value) - 1] = '\0';
+                    updateVariable(varName, STRING, value + 1);
+                } else if (isFloat(value)) {
+                    float floatValue = parseFloat(value);
+                    updateVariable(varName, FLOAT, &floatValue);
+                } else if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
+                    int intValue = atoi(value);
+                    updateVariable(varName, INT, &intValue);
+                } else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0) {
+                    int boolValue = (strcmp(value, "true") == 0) ? 1 : 0;
+                    updateVariable(varName, BOOLEAN, &boolValue);
+                }
+                break;
+            }
+        }
+    }
+
+    fclose(file);
 }
