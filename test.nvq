@@ -1,4 +1,8 @@
 # This is a test file demonstrating Noviq comment functionality
+import p from "test2.nvq"
+import xyzyes from "example/test3.nvq"
+display("P is equal to: %var1", p)
+display("xyzyes is equal to: %var1", xyzyes)
 x = 5 # Initialize x
 
 # Display welcome message
