@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v2.1"
+#define LITECODE_VERSION "prealpha-v1.5"
 
 #ifdef _WIN32
 // Windows implementation of getline
@@ -88,12 +88,11 @@ void executeFile(const char *filename) {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
-    currentLineNumber = 0;
+    int lineNumber = 0;
     int inMultilineComment = 0;
-    
+
     while ((read = getline(&line, &len, file)) != -1) {
-        currentLineNumber++;  // Increment at start of each line
-        
+        lineNumber++;
         if (line[read - 1] == '\n') {
             line[read - 1] = '\0';
         }
@@ -101,47 +100,42 @@ void executeFile(const char *filename) {
         // Skip empty lines or lines with only whitespace
         char *trimmed = line;
         while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
-        if (*trimmed == '\0') {
-            continue;
-        }
+        if (*trimmed == '\0') continue;
 
-        // Handle comments
-        if (strncmp(trimmed, "##", 2) == 0) {
-            inMultilineComment = !inMultilineComment;
-            continue;
+        // Handle multi-line comments first
+        char *stripped = trimmed;
+        while (*stripped == ' ' || *stripped == '\t') stripped++;
+        
+        // Check for exactly "##" with optional whitespace
+        if (strncmp(stripped, "##", 2) == 0) {
+            char *rest = stripped + 2;
+            while (*rest == ' ' || *rest == '\t') rest++;
+            if (*rest == '\0') {  // Only toggle if ## is alone on the line
+                inMultilineComment = !inMultilineComment;
+                continue;
+            }
         }
         
-        if (inMultilineComment || strncmp(trimmed, "#", 1) == 0) {
-            continue;
-        }
+        // Skip everything if we're inside a multiline comment
+        if (inMultilineComment) continue;
 
-        // Process single-line comments
+        // Handle single-line comments after multiline comment check
+        if (strncmp(trimmed, "#", 1) == 0) continue;
+
+        // Process single-line comments at end of line
         char *commentStart = strstr(trimmed, "#");
         if (commentStart != NULL) {
             *commentStart = '\0';
-        }
-
-        // Skip standalone closing braces
-        if (trimmed[0] == '}') {
-            // Check if this is an else block
-            char *elsePart = trimmed + 1;
-            while (*elsePart == ' ' || *elsePart == '\t') elsePart++;
-            if (strncmp(elsePart, "else{", 5) == 0 || 
-                strncmp(elsePart, "elseif(", 7) == 0) {
-                handleIfStatement(elsePart, file);
+            while (commentStart > trimmed && (*(commentStart-1) == ' ' || *(commentStart-1) == '\t')) {
+                commentStart--;
             }
-            continue;
+            *commentStart = '\0';
+            if (*trimmed == '\0') continue;
         }
 
-        // Execute the line
+        // Only interpret non-empty lines that aren't comments
         if (*trimmed) {
-            if (strncmp(trimmed, "if(", 3) == 0 || 
-                strncmp(trimmed, "elseif(", 7) == 0 || 
-                strncmp(trimmed, "else{", 5) == 0) {
-                handleIfStatement(trimmed, file);
-            } else {
-                interpretCommand(trimmed, currentLineNumber);
-            }
+            interpretCommand(trimmed, lineNumber);
         }
     }
 

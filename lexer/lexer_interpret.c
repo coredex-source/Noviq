@@ -56,22 +56,10 @@ void addVariable(const char *name, VarType type, void *value) {
 // Add helper functions for float parsing
 int isFloat(const char *str) {
     int dots = 0;
-    int i = 0;
-
-    // Skip leading minus sign
-    if (str[0] == '-') {
-        i++;
-    }
-
-    // String can't be just a minus sign
-    if (str[i] == '\0') {
-        return 0;
-    }
-
-    for (; str[i] != '\0'; i++) {
+    for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == '.') {
             dots++;
-        } else if (!isdigit(str[i])) {
+        } else if (!isdigit(str[i]) && (i == 0 && str[i] != '-')) {
             return 0;
         }
     }
@@ -245,21 +233,6 @@ Variable *evaluateExpression(const char *expr) {
     
     while (*ptr == ' ' || *ptr == '\t') ptr++;
 
-    // Handle single negative number directly
-    if ((*ptr == '-' && isdigit(*(ptr + 1))) && !strchr(ptr + 1, '+') && 
-        !strchr(ptr + 1, '*') && !strchr(ptr + 1, '/') && !strchr(ptr + 1, '%')) {
-        Variable *result = malloc(sizeof(Variable));
-        if (isFloat(ptr)) {
-            result->type = FLOAT;
-            result->value.floatValue = parseFloat(ptr);
-        } else {
-            result->type = INT;
-            result->value.intValue = atoi(ptr);
-        }
-        free(trimmed);
-        return result;
-    }
-
     // First check for comparison operators
     char *gtOp = strstr(ptr, ">=");
     char *ltOp = strstr(ptr, "<=");
@@ -371,7 +344,7 @@ Variable *evaluateExpression(const char *expr) {
 
     if (!op) {
         // First check if it's a simple variable or value
-        if (!strchr(ptr, '+') && !strchr(ptr, '/') && !strchr(ptr, '*')) {
+        if (!strchr(ptr, '+') && !strchr(ptr, '-') && !strchr(ptr, '*') && !strchr(ptr, '/')) {
             Variable *var = findVariable(ptr);
             if (var) {
                 Variable *result = malloc(sizeof(Variable));
@@ -480,20 +453,7 @@ Variable *evaluateExpression(const char *expr) {
 // Function to interpret and execute commands
 void interpretCommand(const char *command, int lineNumber) {
     currentLineNumber = lineNumber;  // Set the current line number
-
-    // Skip empty lines or lines with only whitespace
-    const char *trimmed = command;
-    while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
-    if (*trimmed == '\0') return;
-
-    // Add if statement handling at the start
-    if (strncmp(trimmed, "if(", 3) == 0) {
-        // Don't handle if statements here, they're handled by executeFile
-        return;
-    }
-
-    // Handle display command
-    if (strncmp(trimmed, "display(", 8) == 0) {
+    if (strncmp(command, "display(", 8) == 0) {
         const char *closingParenthesis = strchr(command + 8, ')');
         if (closingParenthesis) {
             char *content = (char *)malloc(closingParenthesis - (command + 8) + 1);
@@ -538,7 +498,7 @@ void interpretCommand(const char *command, int lineNumber) {
             printf("Syntax error on line %d: missing closing parenthesis\n", lineNumber);
             exit(EXIT_FAILURE);
         }
-    } else if (strchr(trimmed, '=') != NULL) {
+    } else if (strchr(command, '=') != NULL) {
         char *equalsSign = strchr(command, '=');
         size_t nameLength = equalsSign - command;
         char *name = (char *)malloc(nameLength + 1);
@@ -567,225 +527,38 @@ void interpretCommand(const char *command, int lineNumber) {
         if (result) {
             if (result->type == FLOAT) {
                 float floatVal = result->value.floatValue;
-                updateVariable(name, FLOAT, &floatVal);
-            } else if (result->type == INT) {
+                addVariable(name, FLOAT, &floatVal);
+            } else {
                 int intVal = result->value.intValue;
-                updateVariable(name, INT, &intVal);
-            } else if (result->type == BOOLEAN) {
-                int boolVal = result->value.boolValue;
-                updateVariable(name, BOOLEAN, &boolVal);
+                addVariable(name, INT, &intVal);
             }
             free(result);
         } else {
             // Handle non-expression assignments
             if (strcmp(value, "true") == 0) {
                 int boolValue = 1;
-                updateVariable(name, BOOLEAN, &boolValue);
+                addVariable(name, BOOLEAN, &boolValue);
             } else if (strcmp(value, "false") == 0) {
                 int boolValue = 0;
-                updateVariable(name, BOOLEAN, &boolValue);
+                addVariable(name, BOOLEAN, &boolValue);
             } else if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
                 if (isFloat(value)) {
                     float floatValue = parseFloat(value);
-                    updateVariable(name, FLOAT, &floatValue);
+                    addVariable(name, FLOAT, &floatValue);
                 } else {
                     int intValue = atoi(value);
-                    updateVariable(name, INT, &intValue);
+                    addVariable(name, INT, &intValue);
                 }
             } else if (value[0] == '"' || value[0] == '\'') {
                 size_t valueLength = strlen(value);
                 value[valueLength - 1] = '\0';
-                updateVariable(name, STRING, value + 1);
+                addVariable(name, STRING, value + 1);
             }
         }
 
         free(name);
     } else {
-        printf("Unknown command on line %d: %s\n", currentLineNumber, trimmed);
+        printf("Unknown command on line %d: %s\n", lineNumber, command);
         exit(EXIT_FAILURE);
     }
-}
-
-// Add implementation for control flow handling
-int evaluateCondition(const char *condition) {
-    Variable *result = evaluateExpression(condition);
-    if (!result) return 0;
-    
-    int value;
-    if (result->type == BOOLEAN) {
-        value = result->value.boolValue;
-    } else if (result->type == INT) {
-        value = result->value.intValue != 0;
-    } else if (result->type == FLOAT) {
-        value = result->value.floatValue != 0;
-    } else if (result->type == STRING) {
-        value = strlen(result->value.stringValue) > 0;
-    } else {
-        value = 0;
-    }
-    
-    free(result);
-    return value;
-}
-
-typedef struct {
-    int lastConditionMet;
-    int inControlBlock;
-    int skipNextBlock;
-    int nestingLevel;
-} BlockState;
-
-BlockState blockState = {
-    .lastConditionMet = 0,
-    .inControlBlock = 0,
-    .skipNextBlock = 0,
-    .nestingLevel = 0
-};
-
-void executeBlock(const char *line, FILE *file) {
-    char *nextLine = NULL;
-    size_t len = 0;
-    ssize_t read;
-    int braceCount = 1;  // Start with 1 for the opening brace
-    int currentNestLevel = blockState.nestingLevel;
-
-    while ((read = getline(&nextLine, &len, file)) != -1) {
-        currentLineNumber++;
-        
-        if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
-        
-        char *trimmed = nextLine;
-        while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
-
-        // Skip empty lines
-        if (*trimmed == '\0') {
-            free(nextLine);
-            nextLine = NULL;
-            continue;
-        }
-
-        // Count braces
-        for (char *c = trimmed; *c; c++) {
-            if (*c == '{') braceCount++;
-            if (*c == '}') {
-                braceCount--;
-                if (braceCount == 0) {
-                    // Check for else after closing brace
-                    char *elsePart = c + 1;
-                    while (*elsePart == ' ' || *elsePart == '\t') elsePart++;
-                    if (*elsePart == '\0') {
-                        free(nextLine);
-                        return;
-                    }
-                    if (strncmp(elsePart, "else{", 5) == 0 || 
-                        strncmp(elsePart, "elseif(", 7) == 0) {
-                        ungetc('\n', file);
-                        for (int i = strlen(elsePart) - 1; i >= 0; i--) {
-                            ungetc(elsePart[i], file);
-                        }
-                        free(nextLine);
-                        return;
-                    }
-                }
-            }
-        }
-
-        if (!blockState.skipNextBlock && *trimmed) {
-            if (strncmp(trimmed, "if(", 3) == 0 ||
-                strncmp(trimmed, "elseif(", 7) == 0 ||
-                strncmp(trimmed, "else{", 5) == 0) {
-                blockState.nestingLevel++;
-                handleIfStatement(trimmed, file);
-            } else if (trimmed[0] != '}') {
-                interpretCommand(trimmed, currentLineNumber);
-            }
-        }
-        free(nextLine);
-        nextLine = NULL;
-    }
-    
-    blockState.nestingLevel = currentNestLevel;
-    if (nextLine) free(nextLine);
-}
-
-void handleIfStatement(const char *line, FILE *file) {
-    char condition[256];
-    int currentNestLevel = blockState.nestingLevel;
-    
-    if (strncmp(line, "if(", 3) == 0) {
-        char *openBrace = strchr(line, '{');
-        if (!openBrace) {
-            fprintf(stderr, "Error on line %d: Missing opening brace for if statement\n", currentLineNumber);
-            return;
-        }
-        *openBrace = '\0';
-        if (sscanf(line, "if(%[^)])", condition) != 1) {
-            fprintf(stderr, "Error on line %d: Invalid if statement syntax\n", currentLineNumber);
-            return;
-        }
-        blockState.inControlBlock = 1;
-        blockState.lastConditionMet = evaluateCondition(condition);
-        blockState.skipNextBlock = !blockState.lastConditionMet;
-        executeBlock(line, file);
-    }
-    else if (strncmp(line, "elseif(", 7) == 0) {
-        if (!blockState.inControlBlock) {
-            fprintf(stderr, "Error on line %d: elseif without if\n", currentLineNumber);
-            return;
-        }
-        char *openBrace = strchr(line, '{');
-        if (!openBrace) {
-            fprintf(stderr, "Error on line %d: Missing opening brace for elseif statement\n", currentLineNumber);
-            return;
-        }
-        *openBrace = '\0';
-        if (blockState.lastConditionMet) {
-            blockState.skipNextBlock = 1;
-        } else {
-            if (sscanf(line, "elseif(%[^)])", condition) == 1) {
-                blockState.lastConditionMet = evaluateCondition(condition);
-                blockState.skipNextBlock = !blockState.lastConditionMet;
-            }
-        }
-        executeBlock(line, file);
-    }
-    else if (strncmp(line, "else{", 5) == 0) {
-        if (!blockState.inControlBlock) {
-            fprintf(stderr, "Error on line %d: else without if\n", currentLineNumber);
-            return;
-        }
-        blockState.skipNextBlock = blockState.lastConditionMet;
-        executeBlock(line, file);
-        if (currentNestLevel == 0) {
-            blockState.inControlBlock = 0;
-            blockState.lastConditionMet = 0;
-        }
-    }
-}
-
-void updateVariable(const char *name, VarType type, void *value) {
-    for (size_t i = 0; i < variableCount; i++) {
-        if (strcmp(variables[i].name, name) == 0) {
-           // Free existing string if needed
-            if (variables[i].type == STRING && variables[i].value.stringValue) {
-                free(variables[i].value.stringValue);
-            }
-            
-            // Update type and value
-            variables[i].type = type;
-            if (type == STRING) {
-                variables[i].value.stringValue = strdup((char *)value);
-            } else if (type == INT) {
-                variables[i].value.intValue = *(int *)value;
-            } else if (type == FLOAT) {
-                variables[i].value.floatValue = *(float *)value;
-            } else if (type == BOOLEAN) {
-                variables[i].value.boolValue = *(int *)value;
-            }
-            return;
-        }
-    }
-    
-    // If variable not found, add it
-    addVariable(name, type, value);
 }

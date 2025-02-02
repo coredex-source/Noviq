@@ -40,41 +40,4 @@ c4 = 6 <= 3
 c5 = 4 == 4
 display("%var1 %var2 %var3 %var4 %var5",c1,c2,c3,c4,c5)
 
-# Testing if-else statements
-x = 10
-if(x > 5){
-    display("x is greater than 5")
-}else{
-    display("x is less than or equal to 5")
-}
-
-# Testing if-elseif-else
-score = 85
-if(score >= 90){
-    display("Grade: A")
-}elseif(score >= 80){
-    display("Grade: B")
-}elseif(score >= 70){
-    display("Grade: C")
-}else{
-    display("Grade: F")
-}
-
-# Testing nested conditions
-a = 5
-b = -3
-if(a > 0){
-    if(b > 0){
-        display("Both a and b are positive")
-    }elseif(b == 0){
-        display("a is positive, b is zero")
-    }else{
-        display("Only a is positive")
-    }
-}elseif(a == 0){
-    display("a is zero")
-}else{
-    display("a is negative")
-}
-
 # End of test file
