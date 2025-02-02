@@ -192,29 +192,32 @@ Noviq supports basic control flow with if-else statements:
 
 a) If Statement:
    Syntax:
-   if(condition):
+   if(condition){
        statement(s)
+   }
 
 b) If-Else Statement:
    Syntax:
-   if(condition):
+   if(condition){
        statement(s)
-   else:
+   }else{
        statement(s)
+   }
 
 c) If-ElseIf-Else Statement:
    Syntax:
-   if(condition1):
+   if(condition1){
        statement(s)
-   elseif(condition2):
+   }elseif(condition2){
        statement(s)
-   else:
+   }else{
        statement(s)
+   }
 
 d) Rules:
    - Conditions must be in parentheses
-   - Block must be indented with spaces or tabs
-   - Each block ends when indentation returns to previous level
+   - Blocks must be enclosed in curly braces
+   - Whitespace and indentation are ignored
    - Multiple elseif blocks are allowed
    - else block is optional
    - Supports all comparison and logical operators

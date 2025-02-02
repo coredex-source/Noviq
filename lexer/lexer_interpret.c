@@ -629,16 +629,13 @@ int evaluateCondition(const char *condition) {
 }
 
 typedef struct {
-    int indentLevel;
     int lastConditionMet;
     int inControlBlock;
-    int skipNextBlock;  // Add flag to skip blocks after condition is met
+    int skipNextBlock;
     int nestingLevel;
 } BlockState;
 
-// Update BlockState initialization
 BlockState blockState = {
-    .indentLevel = 0,
     .lastConditionMet = 0,
     .inControlBlock = 0,
     .skipNextBlock = 0,
@@ -649,67 +646,66 @@ void executeBlock(const char *line, FILE *file) {
     char *nextLine = NULL;
     size_t len = 0;
     ssize_t read;
+    int braceCount = 1;  // Start with 1 for the opening brace
     int currentNestLevel = blockState.nestingLevel;
 
-    read = getline(&nextLine, &len, file);
-    if (read == -1) {
-        free(nextLine);
-        return;
-    }
-    currentLineNumber++;  // Increment line counter for each line read
-
-    // Count initial indentation
-    int baseIndent = 0;
-    while (nextLine[baseIndent] == ' ' || nextLine[baseIndent] == '\t') baseIndent++;
-
-    // Process first line
-    if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
-    if (!blockState.skipNextBlock) {
-        // Check if this is another control statement
-        if (strncmp(nextLine + baseIndent, "if(", 3) == 0 ||
-            strncmp(nextLine + baseIndent, "elseif(", 7) == 0 ||
-            strcmp(nextLine + baseIndent, "else:") == 0) {
-            blockState.nestingLevel++;
-            handleIfStatement(nextLine + baseIndent, file);
-        } else {
-            interpretCommand(nextLine + baseIndent, currentLineNumber);
-        }
-    }
-    free(nextLine);
-    nextLine = NULL;
-
     while ((read = getline(&nextLine, &len, file)) != -1) {
-        currentLineNumber++;  // Increment line counter for each line read
+        currentLineNumber++;
         
         if (nextLine[read-1] == '\n') nextLine[read-1] = '\0';
         
-        int indent = 0;
-        while (nextLine[indent] == ' ' || nextLine[indent] == '\t') indent++;
-        
-        if (indent < baseIndent) {
-            ungetc('\n', file);
-            for (int i = strlen(nextLine) - 1; i >= 0; i--) {
-                ungetc(nextLine[i], file);
-            }
-            currentLineNumber--;  // Decrement because we're putting this line back
-            break;
+        char *trimmed = nextLine;
+        while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
+
+        // Skip empty lines
+        if (*trimmed == '\0') {
+            free(nextLine);
+            nextLine = NULL;
+            continue;
         }
-        
-        if (indent == baseIndent && !blockState.skipNextBlock) {
-            char *line = nextLine + indent;
-            if (strncmp(line, "if(", 3) == 0 ||
-                strncmp(line, "elseif(", 7) == 0 ||
-                strcmp(line, "else:") == 0) {
+
+        // Count braces
+        for (char *c = trimmed; *c; c++) {
+            if (*c == '{') braceCount++;
+            if (*c == '}') {
+                braceCount--;
+                if (braceCount == 0) {
+                    // Check for else after closing brace
+                    char *elsePart = c + 1;
+                    while (*elsePart == ' ' || *elsePart == '\t') elsePart++;
+                    if (*elsePart == '\0') {
+                        free(nextLine);
+                        return;
+                    }
+                    if (strncmp(elsePart, "else{", 5) == 0 || 
+                        strncmp(elsePart, "elseif(", 7) == 0) {
+                        ungetc('\n', file);
+                        for (int i = strlen(elsePart) - 1; i >= 0; i--) {
+                            ungetc(elsePart[i], file);
+                        }
+                        free(nextLine);
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (!blockState.skipNextBlock && *trimmed) {
+            if (strncmp(trimmed, "if(", 3) == 0 ||
+                strncmp(trimmed, "elseif(", 7) == 0 ||
+                strncmp(trimmed, "else{", 5) == 0) {
                 blockState.nestingLevel++;
-                handleIfStatement(line, file);
-            } else {
-                interpretCommand(line, currentLineNumber);
+                handleIfStatement(trimmed, file);
+            } else if (trimmed[0] != '}') {
+                interpretCommand(trimmed, currentLineNumber);
             }
         }
+        free(nextLine);
+        nextLine = NULL;
     }
     
     blockState.nestingLevel = currentNestLevel;
-    free(nextLine);
+    if (nextLine) free(nextLine);
 }
 
 void handleIfStatement(const char *line, FILE *file) {
@@ -717,8 +713,14 @@ void handleIfStatement(const char *line, FILE *file) {
     int currentNestLevel = blockState.nestingLevel;
     
     if (strncmp(line, "if(", 3) == 0) {
-        if (sscanf(line, "if(%[^)]):", condition) != 1) {
-            fprintf(stderr, "Error: Invalid if statement syntax\n");
+        char *openBrace = strchr(line, '{');
+        if (!openBrace) {
+            fprintf(stderr, "Error on line %d: Missing opening brace for if statement\n", currentLineNumber);
+            return;
+        }
+        *openBrace = '\0';
+        if (sscanf(line, "if(%[^)])", condition) != 1) {
+            fprintf(stderr, "Error on line %d: Invalid if statement syntax\n", currentLineNumber);
             return;
         }
         blockState.inControlBlock = 1;
@@ -728,22 +730,28 @@ void handleIfStatement(const char *line, FILE *file) {
     }
     else if (strncmp(line, "elseif(", 7) == 0) {
         if (!blockState.inControlBlock) {
-            fprintf(stderr, "Error: elseif without if\n");
+            fprintf(stderr, "Error on line %d: elseif without if\n", currentLineNumber);
             return;
         }
+        char *openBrace = strchr(line, '{');
+        if (!openBrace) {
+            fprintf(stderr, "Error on line %d: Missing opening brace for elseif statement\n", currentLineNumber);
+            return;
+        }
+        *openBrace = '\0';
         if (blockState.lastConditionMet) {
             blockState.skipNextBlock = 1;
         } else {
-            if (sscanf(line, "elseif(%[^)]):", condition) == 1) {
+            if (sscanf(line, "elseif(%[^)])", condition) == 1) {
                 blockState.lastConditionMet = evaluateCondition(condition);
                 blockState.skipNextBlock = !blockState.lastConditionMet;
             }
         }
         executeBlock(line, file);
     }
-    else if (strcmp(line, "else:") == 0) {
+    else if (strncmp(line, "else{", 5) == 0) {
         if (!blockState.inControlBlock) {
-            fprintf(stderr, "Error: else without if\n");
+            fprintf(stderr, "Error on line %d: else without if\n", currentLineNumber);
             return;
         }
         blockState.skipNextBlock = blockState.lastConditionMet;
@@ -758,7 +766,7 @@ void handleIfStatement(const char *line, FILE *file) {
 void updateVariable(const char *name, VarType type, void *value) {
     for (size_t i = 0; i < variableCount; i++) {
         if (strcmp(variables[i].name, name) == 0) {
-            // Free existing string if needed
+           // Free existing string if needed
             if (variables[i].type == STRING && variables[i].value.stringValue) {
                 free(variables[i].value.stringValue);
             }

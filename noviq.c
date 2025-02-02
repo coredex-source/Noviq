@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v2.0"
+#define LITECODE_VERSION "prealpha-v2.1"
 
 #ifdef _WIN32
 // Windows implementation of getline
@@ -119,20 +119,25 @@ void executeFile(const char *filename) {
         char *commentStart = strstr(trimmed, "#");
         if (commentStart != NULL) {
             *commentStart = '\0';
-            while (commentStart > trimmed && (*(commentStart-1) == ' ' || *(commentStart-1) == '\t')) {
-                commentStart--;
+        }
+
+        // Skip standalone closing braces
+        if (trimmed[0] == '}') {
+            // Check if this is an else block
+            char *elsePart = trimmed + 1;
+            while (*elsePart == ' ' || *elsePart == '\t') elsePart++;
+            if (strncmp(elsePart, "else{", 5) == 0 || 
+                strncmp(elsePart, "elseif(", 7) == 0) {
+                handleIfStatement(elsePart, file);
             }
-            *commentStart = '\0';
-            if (*trimmed == '\0') {
-                continue;
-            }
+            continue;
         }
 
         // Execute the line
         if (*trimmed) {
             if (strncmp(trimmed, "if(", 3) == 0 || 
                 strncmp(trimmed, "elseif(", 7) == 0 || 
-                strcmp(trimmed, "else:") == 0) {
+                strncmp(trimmed, "else{", 5) == 0) {
                 handleIfStatement(trimmed, file);
             } else {
                 interpretCommand(trimmed, currentLineNumber);

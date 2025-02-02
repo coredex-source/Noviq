@@ -21,14 +21,14 @@ make all
 ```
 - Windows
 ```
-gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c
+gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c -lm
 ```
 ### Run using:
 - MacOS/Linux:
 ```
 ./noviq -e filename.nvq
 ```
-- Windows:
+- Windows (cmd):
 ```
 noviq.exe -e filename.nvq
 ```
