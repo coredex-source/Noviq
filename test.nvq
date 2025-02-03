@@ -67,7 +67,11 @@ y = 2
 if(x>=3){
     if(y<=2){
         display("Yes")
+    } else {
+        display("No")
     }
+} else {
+    display("Ofc not")
 }
 
 # End of test file

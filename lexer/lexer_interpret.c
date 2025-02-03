@@ -632,24 +632,95 @@ void executeIfBlock(const char *condition, const char *block) {
     tempCondition[conditionEnd - condition + 1] = '\0';
 
     if (evaluateCondition(tempCondition)) {
-        // Execute the block: split into lines and interpret each line
-        char *blockCopy = strdup(block);
-        char *line = strtok(blockCopy, "\n");
-        while (line) {
-            // Trim leading and trailing whitespace
-            while (*line == ' ' || *line == '\t') line++;
-            char *end = line + strlen(line) - 1;
-            while (end > line && (*end == ' ' || *end == '\t')) {
-                *end = '\0';
-                end--;
+        // Extract and execute if block
+        char *ifContent = strstr(block, "{");
+        if (ifContent) {
+            // Find the matching closing brace by counting nested braces
+            char *endIf = ifContent + 1;
+            int braceCount = 1;
+            int inString = 0;
+            char stringChar = 0;
+
+            while (*endIf && braceCount > 0) {
+                // Handle string literals
+                if ((*endIf == '"' || *endIf == '\'') && !inString) {
+                    inString = 1;
+                    stringChar = *endIf;
+                } else if (inString && *endIf == stringChar) {
+                    inString = 0;
+                }
+                
+                // Only count braces outside of strings
+                if (!inString) {
+                    if (*endIf == '{') braceCount++;
+                    if (*endIf == '}') braceCount--;
+                }
+                
+                // Move to next character if we haven't found the matching brace
+                if (braceCount > 0) endIf++;
             }
             
-            if (*line) { // Skip empty lines
-                interpretCommand(line, currentLineNumber);
+            // Execute if block content
+            char *blockContent = malloc(endIf - ifContent);
+            strncpy(blockContent, ifContent + 1, endIf - ifContent - 2);
+            blockContent[endIf - ifContent - 2] = '\0';
+            
+            char *line = strtok(blockContent, "\n");
+            while (line) {
+                while (*line == ' ' || *line == '\t') line++;
+                if (*line) {
+                    interpretCommand(line, currentLineNumber);
+                }
+                line = strtok(NULL, "\n");
             }
-            line = strtok(NULL, "\n");
+            free(blockContent);
         }
-        free(blockCopy);
+    } else {
+        // Find and execute else block if it exists
+        char *elseContent = strstr(block, "else");
+        // Skip any nested else blocks by ensuring we're at the right nesting level
+        while (elseContent) {
+            // Count braces between start and else to verify it's the correct else
+            const char *temp = block;  // Changed to const char*
+            int braceCount = 0;
+            while (temp < elseContent) {
+                if (*temp == '{') braceCount++;
+                if (*temp == '}') braceCount--;
+                temp++;
+            }
+            // If braceCount is 0, we found our else
+            if (braceCount == 0) break;
+            elseContent = strstr(elseContent + 4, "else");
+        }
+
+        if (elseContent) {
+            char *elseBlock = strchr(elseContent, '{');
+            if (elseBlock) {
+                // Find the end of the else block using brace counting
+                char *endElse = elseBlock + 1;
+                int braceCount = 1;
+                while (*endElse && braceCount > 0) {
+                    if (*endElse == '{') braceCount++;
+                    if (*endElse == '}') braceCount--;
+                    endElse++;
+                }
+
+                // Execute else block content
+                char *blockContent = malloc(endElse - elseBlock);
+                strncpy(blockContent, elseBlock + 1, endElse - elseBlock - 2);
+                blockContent[endElse - elseBlock - 2] = '\0';
+                
+                char *line = strtok(blockContent, "\n");
+                while (line) {
+                    while (*line == ' ' || *line == '\t') line++;
+                    if (*line) {
+                        interpretCommand(line, currentLineNumber);
+                    }
+                    line = strtok(NULL, "\n");
+                }
+                free(blockContent);
+            }
+        }
     }
     
     free(tempCondition);
@@ -690,11 +761,8 @@ void interpretCommand(const char *command, int lineNumber) {
         condition[conditionLen] = '\0';
 
         // Extract block content
-        size_t blockLen = closeBrace - (openBrace + 1);
-        char *block = (char *)malloc(blockLen + 1);
-        strncpy(block, openBrace + 1, blockLen);
-        block[blockLen] = '\0';
-
+        char *block = malloc(strlen(openBrace));
+        strcpy(block, openBrace);
         executeIfBlock(condition, block);
 
         free(condition);

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v2.2"
+#define LITECODE_VERSION "prealpha-v2.3"
 #ifdef _WIN32
 // Windows implementation of getline
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
@@ -65,7 +65,9 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
 typedef struct {
     char condition[256];
     char content[4096];
+    char elseContent[4096];
     int braceCount;
+    int hasElse;
 } IfBlock;
 
 void displayHelp(const char *programName) {
@@ -137,34 +139,71 @@ void executeFile(const char *filename) {
                 else if (*c == '}') {
                     ifStack[ifStackPtr].braceCount--;
                     if (ifStack[ifStackPtr].braceCount == 0) {
-                        // Found matching closing brace for current if block
-                        char *fullCmd = malloc(strlen(ifStack[ifStackPtr].condition) + 
-                                            strlen(ifStack[ifStackPtr].content) + 32);
-                        sprintf(fullCmd, "if(%s){%s}", 
-                                ifStack[ifStackPtr].condition, 
-                                ifStack[ifStackPtr].content);
-                        interpretCommand(fullCmd, lineNumber);
-                        free(fullCmd);
-                        ifStackPtr--;
-                        *c = '\0';  // Truncate the line at closing brace
-                        break;
+                        // Check for else
+                        char *elseStart = strstr(c + 1, "else");
+                        if (elseStart && elseStart[-1] <= ' ' && elseStart[4] <= ' ') {
+                            // Found else, look for its opening brace
+                            char *elseBrace = strchr(elseStart, '{');
+                            if (!elseBrace) {
+                                fprintf(stderr, "Error on line %d: Missing opening brace for else block\n", lineNumber);
+                                exit(EXIT_FAILURE);
+                            }
+                            ifStack[ifStackPtr].hasElse = 1;
+                            *c = '\0'; // End if block here
+                            break;
+                        } else {
+                            // No else, execute the if block
+                            char *fullCmd = malloc(strlen(ifStack[ifStackPtr].condition) + 
+                                                strlen(ifStack[ifStackPtr].content) + 32);
+                            sprintf(fullCmd, "if(%s){%s}", 
+                                    ifStack[ifStackPtr].condition, 
+                                    ifStack[ifStackPtr].content);
+                            interpretCommand(fullCmd, lineNumber);
+                            free(fullCmd);
+                            ifStackPtr--;
+                            *c = '\0';
+                            break;
+                        }
                     }
                 }
             }
             
             if (ifStackPtr >= 0) {
-                // Still in if block, append this line
-                if (ifStack[ifStackPtr].content[0] != '\0') {
-                    strcat(ifStack[ifStackPtr].content, " ");
+                if (ifStack[ifStackPtr].hasElse) {
+                    // Accumulating else block content
+                    if (ifStack[ifStackPtr].elseContent[0] != '\0') {
+                        strcat(ifStack[ifStackPtr].elseContent, " ");
+                    }
+                    strcat(ifStack[ifStackPtr].elseContent, trimmed);
+                    
+                    // Check if else block is complete
+                    if (strchr(trimmed, '}')) {
+                        char *fullCmd = malloc(strlen(ifStack[ifStackPtr].condition) + 
+                                            strlen(ifStack[ifStackPtr].content) + 
+                                            strlen(ifStack[ifStackPtr].elseContent) + 64);
+                        sprintf(fullCmd, "if(%s){%s}else{%s}", 
+                                ifStack[ifStackPtr].condition,
+                                ifStack[ifStackPtr].content,
+                                ifStack[ifStackPtr].elseContent);
+                        interpretCommand(fullCmd, lineNumber);
+                        free(fullCmd);
+                        ifStackPtr--;
+                    }
+                } else {
+                    // Still in if block, append this line
+                    if (ifStack[ifStackPtr].content[0] != '\0') {
+                        strcat(ifStack[ifStackPtr].content, " ");
+                    }
+                    strcat(ifStack[ifStackPtr].content, trimmed);
                 }
-                strcat(ifStack[ifStackPtr].content, trimmed);
             }
-        }
-        else if (strncmp(trimmed, "if(", 3) == 0) {
+        } else if (strncmp(trimmed, "if(", 3) == 0) {
             // Start new if block
             ifStackPtr++;
             ifStack[ifStackPtr].braceCount = 0;
             ifStack[ifStackPtr].content[0] = '\0';
+            ifStack[ifStackPtr].elseContent[0] = '\0';
+            ifStack[ifStackPtr].hasElse = 0;
             
             // Extract condition
             char *openParen = strchr(trimmed, '(');

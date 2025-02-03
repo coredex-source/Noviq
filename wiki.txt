@@ -139,6 +139,27 @@ a) If Statement:
    - Multiple statements allowed in block
    - Nested if statements supported
 
+   - Else Statement:
+     Syntax:
+     if(condition) {
+         statements
+     } else {
+         statements
+     }
+
+   Example:
+     if(x > 5) {
+         display("Greater than 5")
+     } else {
+         display("Less than or equal to 5")
+     }
+
+   - Rules:
+     * else must be on same line as closing brace of if
+     * else block must have braces
+     * else can be used with any if statement
+     * else executes when if condition is false
+
 8. Error Handling
 ---------------
 The interpreter provides specific errors for:
