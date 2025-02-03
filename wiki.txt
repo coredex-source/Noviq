@@ -107,7 +107,39 @@ c) General:
    - Whitespace is ignored except in strings
    - Empty lines are allowed
 
-7. Error Handling
+7. Control Flow
+-------------
+a) If Statement:
+   - Basic conditional execution
+   Syntax: 
+   if(condition) {
+       statements
+   }
+   
+   - Condition can be:
+     * Boolean variable
+     * Comparison expression
+     * Logical expression
+   
+   - Example:
+     if(x > 5) {
+         display("x is greater than 5")
+     }
+
+     if(isValid) {
+         display("Valid")
+     }
+
+     if(x > 5 AND y < 10) {
+         display("Condition met")
+     }
+
+   - Indentation is optional
+   - Braces are required
+   - Multiple statements allowed in block
+   - Nested if statements supported
+
+8. Error Handling
 ---------------
 The interpreter provides specific errors for:
 a) Syntax Violations:
@@ -124,7 +156,7 @@ b) Runtime Errors:
 
 Each error message includes the line number and details about the error.
 
-8. Arithmetic Operations
+9. Arithmetic Operations
 ---------------------
 Noviq supports basic arithmetic operations for numbers:
 
@@ -154,7 +186,7 @@ c) Rules:
    - Division always produces float results
    - Division by zero produces an error
 
-9. Logical Operations
+10. Logical Operations
 ------------------
 Noviq supports basic logical operations:
 
@@ -184,7 +216,7 @@ c) Type Conversion Rules:
    - Booleans: Used directly
    - Results are always boolean type
 
-10. Comments
+11. Comments
 ---------
 Noviq supports two types of comments:
 
@@ -217,7 +249,7 @@ c) Comment Rules:
    - Code after a comment marker on the same line is ignored
    - Comments do not affect line numbering for error reporting
 
-11. Constants
+12. Constants
 -----------
 Noviq supports constant declarations:
 

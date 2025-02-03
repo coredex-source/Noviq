@@ -595,9 +595,113 @@ void handleInputCommand(const char *args) {
     free(argsTemp);
 }
 
+int evaluateCondition(const char *condition) {
+    // First try to find it as a boolean variable
+    Variable *var = findVariable(condition);
+    if (var) {
+        if (var->type == BOOLEAN) return var->value.boolValue;
+        if (var->type == INT) return var->value.intValue != 0;
+        if (var->type == FLOAT) return var->value.floatValue != 0;
+        if (var->type == STRING) return strlen(var->value.stringValue) > 0;
+    }
+
+    // Try to evaluate as an expression
+    Variable *result = evaluateExpression(condition);
+    if (result) {
+        int value;
+        if (result->type == BOOLEAN) value = result->value.boolValue;
+        else if (result->type == INT) value = result->value.intValue != 0;
+        else if (result->type == FLOAT) value = result->value.floatValue != 0;
+        else value = 0;
+        free(result);
+        return value;
+    }
+
+    return 0;
+}
+
+void executeIfBlock(const char *condition, const char *block) {
+    // Remove any leading/trailing spaces from condition
+    while (*condition == ' ' || *condition == '\t') condition++;
+    char *conditionEnd = (char *)condition + strlen(condition) - 1;
+    while (conditionEnd > condition && (*conditionEnd == ' ' || *conditionEnd == '\t')) conditionEnd--;
+    
+    // Create temporary condition string
+    char *tempCondition = (char *)malloc(conditionEnd - condition + 2);
+    strncpy(tempCondition, condition, conditionEnd - condition + 1);
+    tempCondition[conditionEnd - condition + 1] = '\0';
+
+    if (evaluateCondition(tempCondition)) {
+        // Execute the block: split into lines and interpret each line
+        char *blockCopy = strdup(block);
+        char *line = strtok(blockCopy, "\n");
+        while (line) {
+            // Trim leading and trailing whitespace
+            while (*line == ' ' || *line == '\t') line++;
+            char *end = line + strlen(line) - 1;
+            while (end > line && (*end == ' ' || *end == '\t')) {
+                *end = '\0';
+                end--;
+            }
+            
+            if (*line) { // Skip empty lines
+                interpretCommand(line, currentLineNumber);
+            }
+            line = strtok(NULL, "\n");
+        }
+        free(blockCopy);
+    }
+    
+    free(tempCondition);
+}
+
 void interpretCommand(const char *command, int lineNumber) {
     currentLineNumber = lineNumber;
     
+    if (strncmp(command, "if", 2) == 0) {
+        char *openParen = strchr(command, '(');
+        if (!openParen) {
+            fprintf(stderr, "Error on line %d: Missing opening parenthesis\n", lineNumber);
+            exit(EXIT_FAILURE);
+        }
+
+        char *closeParen = strchr(openParen, ')');
+        if (!closeParen) {
+            fprintf(stderr, "Error on line %d: Missing closing parenthesis\n", lineNumber);
+            exit(EXIT_FAILURE);
+        }
+
+        char *openBrace = strchr(closeParen, '{');
+        if (!openBrace) {
+            fprintf(stderr, "Error on line %d: Missing opening brace\n", lineNumber);
+            exit(EXIT_FAILURE);
+        }
+
+        char *closeBrace = strrchr(command, '}');  // Use strrchr to find last }
+        if (!closeBrace) {
+            fprintf(stderr, "Error on line %d: Missing closing brace\n", lineNumber);
+            exit(EXIT_FAILURE);
+        }
+
+        // Extract condition
+        size_t conditionLen = closeParen - (openParen + 1);
+        char *condition = (char *)malloc(conditionLen + 1);
+        strncpy(condition, openParen + 1, conditionLen);
+        condition[conditionLen] = '\0';
+
+        // Extract block content
+        size_t blockLen = closeBrace - (openBrace + 1);
+        char *block = (char *)malloc(blockLen + 1);
+        strncpy(block, openBrace + 1, blockLen);
+        block[blockLen] = '\0';
+
+        executeIfBlock(condition, block);
+
+        free(condition);
+        free(block);
+        return;
+    }
+
     if (strncmp(command, "const ", 6) == 0) {
         // Handle constant declaration
         const char *declaration = command + 6;

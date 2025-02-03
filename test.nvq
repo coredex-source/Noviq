@@ -61,4 +61,13 @@ display("%var1", a1)
 const a2 = "Noviq"
 display("%var1", a2)
 
+# Testing if statements:
+x = 3
+y = 2
+if(x>=3){
+    if(y<=2){
+        display("Yes")
+    }
+}
+
 # End of test file

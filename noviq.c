@@ -3,8 +3,7 @@
 #include <string.h>
 #include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v2.1"
-
+#define LITECODE_VERSION "prealpha-v2.2"
 #ifdef _WIN32
 // Windows implementation of getline
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
@@ -61,6 +60,14 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
 }
 #endif
 
+#define MAX_IF_NESTING 32
+
+typedef struct {
+    char condition[256];
+    char content[4096];
+    int braceCount;
+} IfBlock;
+
 void displayHelp(const char *programName) {
     printf("Noviq Interpreter\n");
     printf("Usage: %s [options] or %s -e <filename>\n\n", programName, programName);
@@ -90,53 +97,113 @@ void executeFile(const char *filename) {
     ssize_t read;
     int lineNumber = 0;
     int inMultilineComment = 0;
+    
+    // Stack of if blocks
+    IfBlock ifStack[MAX_IF_NESTING];
+    int ifStackPtr = -1;
 
     while ((read = getline(&line, &len, file)) != -1) {
         lineNumber++;
         if (line[read - 1] == '\n') {
             line[read - 1] = '\0';
         }
-        
+
         // Skip empty lines or lines with only whitespace
         char *trimmed = line;
         while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
         if (*trimmed == '\0') continue;
 
-        // Handle multi-line comments first
-        char *stripped = trimmed;
-        while (*stripped == ' ' || *stripped == '\t') stripped++;
-        
-        // Check for exactly "##" with optional whitespace
-        if (strncmp(stripped, "##", 2) == 0) {
-            char *rest = stripped + 2;
-            while (*rest == ' ' || *rest == '\t') rest++;
-            if (*rest == '\0') {  // Only toggle if ## is alone on the line
-                inMultilineComment = !inMultilineComment;
-                continue;
-            }
+        // Handle comments
+        if (strncmp(trimmed, "##", 2) == 0) {
+            inMultilineComment = !inMultilineComment;
+            continue;
         }
-        
-        // Skip everything if we're inside a multiline comment
         if (inMultilineComment) continue;
-
-        // Handle single-line comments after multiline comment check
         if (strncmp(trimmed, "#", 1) == 0) continue;
 
-        // Process single-line comments at end of line
         char *commentStart = strstr(trimmed, "#");
         if (commentStart != NULL) {
-            *commentStart = '\0';
-            while (commentStart > trimmed && (*(commentStart-1) == ' ' || *(commentStart-1) == '\t')) {
-                commentStart--;
-            }
             *commentStart = '\0';
             if (*trimmed == '\0') continue;
         }
 
-        // Only interpret non-empty lines that aren't comments
-        if (*trimmed) {
+        // Handle if blocks and other commands
+        if (ifStackPtr >= 0) {
+            // We're inside an if block
+            for (char *c = trimmed; *c; c++) {
+                if (*c == '{') {
+                    ifStack[ifStackPtr].braceCount++;
+                }
+                else if (*c == '}') {
+                    ifStack[ifStackPtr].braceCount--;
+                    if (ifStack[ifStackPtr].braceCount == 0) {
+                        // Found matching closing brace for current if block
+                        char *fullCmd = malloc(strlen(ifStack[ifStackPtr].condition) + 
+                                            strlen(ifStack[ifStackPtr].content) + 32);
+                        sprintf(fullCmd, "if(%s){%s}", 
+                                ifStack[ifStackPtr].condition, 
+                                ifStack[ifStackPtr].content);
+                        interpretCommand(fullCmd, lineNumber);
+                        free(fullCmd);
+                        ifStackPtr--;
+                        *c = '\0';  // Truncate the line at closing brace
+                        break;
+                    }
+                }
+            }
+            
+            if (ifStackPtr >= 0) {
+                // Still in if block, append this line
+                if (ifStack[ifStackPtr].content[0] != '\0') {
+                    strcat(ifStack[ifStackPtr].content, " ");
+                }
+                strcat(ifStack[ifStackPtr].content, trimmed);
+            }
+        }
+        else if (strncmp(trimmed, "if(", 3) == 0) {
+            // Start new if block
+            ifStackPtr++;
+            ifStack[ifStackPtr].braceCount = 0;
+            ifStack[ifStackPtr].content[0] = '\0';
+            
+            // Extract condition
+            char *openParen = strchr(trimmed, '(');
+            char *closeParen = strchr(openParen, ')');
+            if (!closeParen) {
+                fprintf(stderr, "Error on line %d: Missing closing parenthesis\n", lineNumber);
+                exit(EXIT_FAILURE);
+            }
+            
+            strncpy(ifStack[ifStackPtr].condition, 
+                    openParen + 1, 
+                    closeParen - (openParen + 1));
+            ifStack[ifStackPtr].condition[closeParen - (openParen + 1)] = '\0';
+
+            // Get content after condition
+            char *content = strchr(closeParen, '{');
+            if (content) {
+                ifStack[ifStackPtr].braceCount = 1;
+                strcat(ifStack[ifStackPtr].content, content + 1);
+                
+                // Check if it's a single-line if
+                if (strchr(content, '}')) {
+                    char *fullCmd = malloc(strlen(trimmed) + 1);
+                    strcpy(fullCmd, trimmed);
+                    interpretCommand(fullCmd, lineNumber);
+                    free(fullCmd);
+                    ifStackPtr--;
+                }
+            }
+        }
+        else if (ifStackPtr < 0) {
+            // Regular command outside if block
             interpretCommand(trimmed, lineNumber);
         }
+    }
+
+    if (ifStackPtr >= 0) {
+        fprintf(stderr, "Error: Unclosed if block at end of file\n");
+        exit(EXIT_FAILURE);
     }
 
     free(line);

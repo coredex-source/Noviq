@@ -45,4 +45,8 @@ Variable performComparison(Variable *left, Variable *right, const char *operator
 void handleInputCommand(const char *args);
 void processInput(const char *prompt, const char *varName);
 
+// Add if statement parsing declarations
+void executeIfBlock(const char *condition, const char *block);
+int evaluateCondition(const char *condition);
+
 #endif // LEXER_INTERPRET_H
