@@ -45,7 +45,38 @@ c) Multiple Variable Display:
    Syntax: display("text %var1 more-text %var2", var1, var2)
    Example: display("Age: %var1, Name: %var2", age, name)
 
-4. String Formatting System
+4. Input System
+-------------
+The input command is used to get user input and store it in variables:
+
+a) Single Variable Input:
+   Syntax: input("prompt message", variableName)
+   Example: input("Enter value: ", x)
+
+b) Multiple Variable Input (Same Prompt):
+   Syntax: input("prompt message", var1, var2, ...)
+   Example: input("Enter values: ", x, y)
+   Note: Subsequent inputs will show just ":" as prompt
+
+c) Multiple Variable Input (Different Prompts):
+   Syntax: input("prompt1", var1, "prompt2", var2, ...)
+   Example: input("Enter x: ", x, "Enter y: ", y)
+
+d) Type Detection:
+   The input system automatically detects and converts to:
+   - Integer: When input is a whole number
+   - Float: When input contains decimal point
+   - Boolean: When input is "true" or "false"
+   - String: For all other input types
+
+e) Usage Rules:
+   - Each prompt must be in quotes
+   - Variables don't need to be declared beforehand
+   - Press Enter after each input value
+   - Type is determined automatically
+   - Values are stored immediately after input
+
+5. String Formatting System
 ------------------------
 Noviq supports dynamic string creation using variables:
 
@@ -57,7 +88,7 @@ b) Multiple Variables:
    Can combine multiple variables in any order
    Example: info = ("%var1 is %var2 years old", name, age)
 
-5. Syntax Rules
+6. Syntax Rules
 -------------
 a) Variables:
    - Must start with letter or underscore
@@ -76,7 +107,7 @@ c) General:
    - Whitespace is ignored except in strings
    - Empty lines are allowed
 
-6. Error Handling
+7. Error Handling
 ---------------
 The interpreter provides specific errors for:
 a) Syntax Violations:
@@ -93,7 +124,7 @@ b) Runtime Errors:
 
 Each error message includes the line number and details about the error.
 
-7. Arithmetic Operations
+8. Arithmetic Operations
 ---------------------
 Noviq supports basic arithmetic operations for numbers:
 
@@ -123,7 +154,7 @@ c) Rules:
    - Division always produces float results
    - Division by zero produces an error
 
-8. Logical Operations
+9. Logical Operations
 ------------------
 Noviq supports basic logical operations:
 
@@ -153,7 +184,7 @@ c) Type Conversion Rules:
    - Booleans: Used directly
    - Results are always boolean type
 
-9. Comments
+10. Comments
 ---------
 Noviq supports two types of comments:
 

@@ -40,4 +40,8 @@ Variable performLogicalOperation(Variable *left, Variable *right, const char *op
 int isComparisonOperator(const char *str);
 Variable performComparison(Variable *left, Variable *right, const char *operator);
 
+// Add input handling functions
+void handleInputCommand(const char *args);
+void processInput(const char *prompt, const char *varName);
+
 #endif // LEXER_INTERPRET_H

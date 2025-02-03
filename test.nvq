@@ -43,4 +43,16 @@ c4 = 6 <= 3
 c5 = 4 == 4
 display("%var1 %var2 %var3 %var4 %var5",c1,c2,c3,c4,c5)
 
+# Testing user inputs:
+# Remove the double # marks to execute the below:
+
+##
+input("Enter value: ", x)  # Single value
+display("%var1",x)
+input("Enter values: ", x, y)  # Multiple values, one prompt
+display("%var1 %var2",x,y)
+input("Enter x: ", x, "Enter y: ", y)  # Multiple values, multiple prompts
+display("%var1 %var2",x,y)
+##
+
 # End of test file

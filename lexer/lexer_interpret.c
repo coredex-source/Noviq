@@ -495,9 +495,116 @@ Variable *evaluateExpression(const char *expr) {
 }
 
 // Function to interpret and execute commands
+void processInput(const char *prompt, const char *varName) {
+    char buffer[1024];
+    
+    // Print the prompt
+    printf("%s", prompt);
+    fflush(stdout);
+    
+    // Get input
+    if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+        // Remove trailing newline
+        size_t len = strlen(buffer);
+        if (len > 0 && buffer[len-1] == '\n') {
+            buffer[len-1] = '\0';
+        }
+        
+        // Try to parse as number first
+        char *endptr;
+        long intValue = strtol(buffer, &endptr, 10);
+        
+        if (*endptr == '\0') {
+            // It's an integer
+            int value = (int)intValue;
+            addVariable(varName, INT, &value);
+        } else if (isFloat(buffer)) {
+            // It's a float
+            float value = parseFloat(buffer);
+            addVariable(varName, FLOAT, &value);
+        } else if (strcmp(buffer, "true") == 0) {
+            // It's boolean true
+            int value = 1;
+            addVariable(varName, BOOLEAN, &value);
+        } else if (strcmp(buffer, "false") == 0) {
+            // It's boolean false
+            int value = 0;
+            addVariable(varName, BOOLEAN, &value);
+        } else {
+            // Treat as string by default
+            addVariable(varName, STRING, buffer);
+        }
+    }
+}
+
+void handleInputCommand(const char *args) {
+    char *argsTemp = strdup(args);
+    char **prompts = NULL;
+    char **variables = NULL;
+    int count = 0;
+    int maxVars = 10;  // Maximum variables to handle
+    
+    prompts = malloc(maxVars * sizeof(char*));
+    variables = malloc(maxVars * sizeof(char*));
+    
+    char *token = strtok(argsTemp, ",");
+    while (token != NULL && count < maxVars) {
+        // Skip leading whitespace
+        while (*token == ' ') token++;
+        
+        if (token[0] == '"' || token[0] == '\'') {
+            // This is a prompt
+            size_t len = strlen(token);
+            token[len-1] = '\0';  // Remove closing quote
+            prompts[count] = strdup(token + 1);
+        } else {
+            // This is a variable
+            variables[count] = strdup(token);
+            count++;
+        }
+        token = strtok(NULL, ",");
+    }
+    
+    // Process all variables
+    for (int i = 0; i < count; i++) {
+        // If we have a prompt for this variable, use it
+        // Otherwise use a modified version of the first prompt
+        if (prompts[i]) {
+            processInput(prompts[i], variables[i]);
+        } else if (i > 0 && prompts[0]) {
+            // For subsequent variables using the same prompt, just show ": "
+            processInput(": ", variables[i]);
+        } else {
+            processInput(prompts[0], variables[i]);
+        }
+    }
+    
+    // Cleanup
+    for (int i = 0; i < count; i++) {
+        if (prompts[i]) free(prompts[i]);
+        if (variables[i]) free(variables[i]);
+    }
+    free(prompts);
+    free(variables);
+    free(argsTemp);
+}
+
 void interpretCommand(const char *command, int lineNumber) {
-    currentLineNumber = lineNumber;  // Set the current line number
-    if (strncmp(command, "display(", 8) == 0) {
+    currentLineNumber = lineNumber;
+    
+    if (strncmp(command, "input(", 6) == 0) {
+        const char *closingParenthesis = strchr(command + 6, ')');
+        if (closingParenthesis) {
+            char *content = (char *)malloc(closingParenthesis - (command + 6) + 1);
+            strncpy(content, command + 6, closingParenthesis - (command + 6));
+            content[closingParenthesis - (command + 6)] = '\0';
+            handleInputCommand(content);
+            free(content);
+        } else {
+            printf("Syntax error on line %d: missing closing parenthesis\n", lineNumber);
+            exit(EXIT_FAILURE);
+        }
+    } else if (strncmp(command, "display(", 8) == 0) {
         const char *closingParenthesis = strchr(command + 8, ')');
         if (closingParenthesis) {
             char *content = (char *)malloc(closingParenthesis - (command + 8) + 1);
