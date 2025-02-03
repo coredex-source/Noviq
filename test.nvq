@@ -12,6 +12,9 @@ It will be ignored by the interpreter
 y = "Sam" # Set name
 display("Name: %var1", y) # Show name
 
+y = "Samy" # Set new name
+display("Name: %var1", y) # Show new name
+
 a = 10.22
 b = false
 display("Noviq is running!")

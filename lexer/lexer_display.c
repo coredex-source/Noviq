@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "lexer_display.h"
 #include "lexer_interpret.h"
 
@@ -21,12 +22,25 @@ void displayFloat(float value) {
 
 // Add this helper function before displayFormatted
 int isExpression(const char* str) {
+    // Skip leading whitespace
+    while (*str == ' ' || *str == '\t') str++;
+    
+    // Check if it's just a negative number
+    if (*str == '-' && isdigit(*(str + 1))) {
+        str++;  // Skip the minus
+        while (isdigit(*str) || *str == '.') str++;  // Skip the number
+        // If we've reached the end, it's just a negative number
+        return *str != '\0';
+    }
+
     for (int i = 0; str[i]; i++) {
         // Check for two-character operators
         if (str[i] == '*' && str[i+1] == '*') return 1;  // **
         if (str[i] == '/' && str[i+1] == '/') return 1;  // //
-        // Check for single character operators
-        if (strchr("+-*/%", str[i])) return 1;
+        // Check for single character operators except leading minus
+        if (i > 0 && strchr("+-*/%", str[i])) return 1;
+        // Check for operator at start only if not a negative number
+        if (i == 0 && strchr("+*/%", str[i])) return 1;
     }
     return 0;
 }

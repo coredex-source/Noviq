@@ -38,6 +38,30 @@ Variable *findVariable(const char *name) {
 }
 
 void addVariable(const char *name, VarType type, void *value) {
+    // First check if variable already exists
+    for (size_t i = 0; i < variableCount; i++) {
+        if (strcmp(variables[i].name, name) == 0) {
+            // Free old string value if it was a string
+            if (variables[i].type == STRING) {
+                free(variables[i].value.stringValue);
+            }
+            
+            // Update value
+            variables[i].type = type;
+            if (type == INT) {
+                variables[i].value.intValue = *(int *)value;
+            } else if (type == FLOAT) {
+                variables[i].value.floatValue = *(float *)value;
+            } else if (type == BOOLEAN) {
+                variables[i].value.boolValue = *(int *)value;
+            } else {
+                variables[i].value.stringValue = strdup((char *)value);
+            }
+            return;  // Exit after updating
+        }
+    }
+
+    // If variable doesn't exist, add new one
     variables = realloc(variables, (variableCount + 1) * sizeof(Variable));
     variables[variableCount].name = strdup(name);
     variables[variableCount].type = type;
@@ -233,6 +257,21 @@ Variable *evaluateExpression(const char *expr) {
     
     while (*ptr == ' ' || *ptr == '\t') ptr++;
 
+    // Check if it's just a negative number
+    if (ptr[0] == '-' && isdigit(ptr[1]) && !strchr(ptr + 1, '+') && 
+        !strchr(ptr + 1, '-') && !strchr(ptr + 1, '*') && !strchr(ptr + 1, '/')) {
+        Variable *result = malloc(sizeof(Variable));
+        if (isFloat(ptr)) {
+            result->type = FLOAT;
+            result->value.floatValue = parseFloat(ptr);
+        } else {
+            result->type = INT;
+            result->value.intValue = atoi(ptr);
+        }
+        free(trimmed);
+        return result;
+    }
+
     // First check for comparison operators
     char *gtOp = strstr(ptr, ">=");
     char *ltOp = strstr(ptr, "<=");
@@ -275,13 +314,18 @@ Variable *evaluateExpression(const char *expr) {
 
     // Check for NOT/! operator first
     if (strncmp(ptr, "NOT ", 4) == 0 || strncmp(ptr, "! ", 2) == 0 || ptr[0] == '!') {
-        Variable *operand = evaluateExpression(ptr + (ptr[0] == 'N' ? 4 : (ptr[0] == '!' && ptr[1] == ' ' ? 2 : 1)));
-        if (operand) {
-            Variable *result = malloc(sizeof(Variable));
-            *result = performLogicalOperation(operand, NULL, "NOT");
-            free(operand);
-            free(trimmed);
-            return result;
+        // Skip the minus if it's followed by a number (negative number)
+        if (ptr[0] == '-' && isdigit(ptr[1])) {
+            // Do nothing, let it fall through to number parsing
+        } else {
+            Variable *operand = evaluateExpression(ptr + (ptr[0] == 'N' ? 4 : (ptr[0] == '!' && ptr[1] == ' ' ? 2 : 1)));
+            if (operand) {
+                Variable *result = malloc(sizeof(Variable));
+                *result = performLogicalOperation(operand, NULL, "NOT");
+                free(operand);
+                free(trimmed);
+                return result;
+            }
         }
     }
 
@@ -344,7 +388,7 @@ Variable *evaluateExpression(const char *expr) {
 
     if (!op) {
         // First check if it's a simple variable or value
-        if (!strchr(ptr, '+') && !strchr(ptr, '-') && !strchr(ptr, '*') && !strchr(ptr, '/')) {
+        if (!strchr(ptr, '+') && !strchr(ptr + 1, '-') && !strchr(ptr, '*') && !strchr(ptr, '/')) {
             Variable *var = findVariable(ptr);
             if (var) {
                 Variable *result = malloc(sizeof(Variable));
@@ -352,7 +396,7 @@ Variable *evaluateExpression(const char *expr) {
                 free(trimmed);
                 return result;
             }
-            // Try parsing as number
+            // Try parsing as number (including negative numbers)
             if (isdigit(*ptr) || (*ptr == '-' && isdigit(*(ptr + 1)))) {
                 Variable *result = malloc(sizeof(Variable));
                 if (isFloat(ptr)) {
