@@ -6,6 +6,7 @@ typedef enum { INT, STRING, FLOAT, BOOLEAN } VarType;
 typedef struct {
     char *name;
     VarType type;
+    int isConstant;  // Add this field
     union {
         int intValue;
         char *stringValue;

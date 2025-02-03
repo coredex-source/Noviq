@@ -216,3 +216,29 @@ c) Comment Rules:
    - Single-line comments can appear anywhere on a line
    - Code after a comment marker on the same line is ignored
    - Comments do not affect line numbering for error reporting
+
+11. Constants
+-----------
+Noviq supports constant declarations:
+
+a) Declaration:
+   Syntax: const variableName = value
+   Example: const pi = 3.14159 
+           const name = "John"
+           const enabled = true
+
+b) Rules:
+   - Constants must be initialized when declared
+   - Constants cannot be modified after declaration
+   - Constants support all variable types
+   - Attempting to modify a constant produces an error
+   - Constants can be used in expressions like regular variables
+
+c) Usage Examples:
+   const MAX_SIZE = 100
+   const PI = 3.14159
+   const GREETING = "Hello"
+   const ENABLED = true
+
+   x = MAX_SIZE + 5  // Valid: using constant in expression
+   MAX_SIZE = 200    // Error: cannot modify constant

@@ -55,4 +55,10 @@ input("Enter x: ", x, "Enter y: ", y)  # Multiple values, multiple prompts
 display("%var1 %var2",x,y)
 ##
 
+# Testing constants:
+const a1 = 10
+display("%var1", a1)
+const a2 = "Noviq"
+display("%var1", a2)
+
 # End of test file

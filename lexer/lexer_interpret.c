@@ -37,16 +37,21 @@ Variable *findVariable(const char *name) {
     return NULL;
 }
 
-void addVariable(const char *name, VarType type, void *value) {
+void addVariable(const char *name, VarType type, void *value, int isConstant) {
     // First check if variable already exists
     for (size_t i = 0; i < variableCount; i++) {
         if (strcmp(variables[i].name, name) == 0) {
-            // Free old string value if it was a string
-            if (variables[i].type == STRING) {
-                free(variables[i].value.stringValue);
+            // Check if the variable is a constant
+            if (variables[i].isConstant) {
+                fprintf(stderr, "Error on line %d: Cannot modify constant '%s'\n", 
+                        currentLineNumber, name);
+                exit(EXIT_FAILURE);
             }
             
             // Update value
+            if (variables[i].type == STRING) {
+                free(variables[i].value.stringValue);
+            }
             variables[i].type = type;
             if (type == INT) {
                 variables[i].value.intValue = *(int *)value;
@@ -57,7 +62,7 @@ void addVariable(const char *name, VarType type, void *value) {
             } else {
                 variables[i].value.stringValue = strdup((char *)value);
             }
-            return;  // Exit after updating
+            return;
         }
     }
 
@@ -65,6 +70,7 @@ void addVariable(const char *name, VarType type, void *value) {
     variables = realloc(variables, (variableCount + 1) * sizeof(Variable));
     variables[variableCount].name = strdup(name);
     variables[variableCount].type = type;
+    variables[variableCount].isConstant = isConstant;  // Set constant flag
     if (type == INT) {
         variables[variableCount].value.intValue = *(int *)value;
     } else if (type == FLOAT) {
@@ -517,22 +523,22 @@ void processInput(const char *prompt, const char *varName) {
         if (*endptr == '\0') {
             // It's an integer
             int value = (int)intValue;
-            addVariable(varName, INT, &value);
+            addVariable(varName, INT, &value, 0);
         } else if (isFloat(buffer)) {
             // It's a float
             float value = parseFloat(buffer);
-            addVariable(varName, FLOAT, &value);
+            addVariable(varName, FLOAT, &value, 0);
         } else if (strcmp(buffer, "true") == 0) {
             // It's boolean true
             int value = 1;
-            addVariable(varName, BOOLEAN, &value);
+            addVariable(varName, BOOLEAN, &value, 0);
         } else if (strcmp(buffer, "false") == 0) {
             // It's boolean false
             int value = 0;
-            addVariable(varName, BOOLEAN, &value);
+            addVariable(varName, BOOLEAN, &value, 0);
         } else {
             // Treat as string by default
-            addVariable(varName, STRING, buffer);
+            addVariable(varName, STRING, buffer, 0);
         }
     }
 }
@@ -592,7 +598,70 @@ void handleInputCommand(const char *args) {
 void interpretCommand(const char *command, int lineNumber) {
     currentLineNumber = lineNumber;
     
-    if (strncmp(command, "input(", 6) == 0) {
+    if (strncmp(command, "const ", 6) == 0) {
+        // Handle constant declaration
+        const char *declaration = command + 6;
+        char *equalsSign = strchr(declaration, '=');
+        if (!equalsSign) {
+            printf("Syntax error on line %d: constant declaration requires initialization\n", lineNumber);
+            exit(EXIT_FAILURE);
+        }
+
+        size_t nameLength = equalsSign - declaration;
+        char *name = (char *)malloc(nameLength + 1);
+        strncpy(name, declaration, nameLength);
+        name[nameLength] = '\0';
+
+        // Trim name
+        char *end = name + nameLength - 1;
+        while (end > name && (*end == ' ' || *end == '\t')) {
+            *end = '\0';
+            end--;
+        }
+        char *start = name;
+        while (*start == ' ' || *start == '\t') start++;
+        if (start != name) {
+            memmove(name, start, strlen(start) + 1);
+        }
+
+        char *value = equalsSign + 1;
+        while (*value == ' ') value++;
+
+        // Evaluate and add constant
+        Variable *result = evaluateExpression(value);
+        if (result) {
+            if (result->type == FLOAT) {
+                float floatVal = result->value.floatValue;
+                addVariable(name, FLOAT, &floatVal, 1);  // 1 for constant
+            } else {
+                int intVal = result->value.intValue;
+                addVariable(name, INT, &intVal, 1);  // 1 for constant
+            }
+            free(result);
+        } else {
+            // Handle literal values
+            if (strcmp(value, "true") == 0) {
+                int boolValue = 1;
+                addVariable(name, BOOLEAN, &boolValue, 1);
+            } else if (strcmp(value, "false") == 0) {
+                int boolValue = 0;
+                addVariable(name, BOOLEAN, &boolValue, 1);
+            } else if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
+                if (isFloat(value)) {
+                    float floatValue = parseFloat(value);
+                    addVariable(name, FLOAT, &floatValue, 1);
+                } else {
+                    int intValue = atoi(value);
+                    addVariable(name, INT, &intValue, 1);
+                }
+            } else if (value[0] == '"' || value[0] == '\'') {
+                size_t valueLength = strlen(value);
+                value[valueLength - 1] = '\0';
+                addVariable(name, STRING, value + 1, 1);
+            }
+        }
+        free(name);
+    } else if (strncmp(command, "input(", 6) == 0) {
         const char *closingParenthesis = strchr(command + 6, ')');
         if (closingParenthesis) {
             char *content = (char *)malloc(closingParenthesis - (command + 6) + 1);
@@ -678,32 +747,32 @@ void interpretCommand(const char *command, int lineNumber) {
         if (result) {
             if (result->type == FLOAT) {
                 float floatVal = result->value.floatValue;
-                addVariable(name, FLOAT, &floatVal);
+                addVariable(name, FLOAT, &floatVal, 0);
             } else {
                 int intVal = result->value.intValue;
-                addVariable(name, INT, &intVal);
+                addVariable(name, INT, &intVal, 0);
             }
             free(result);
         } else {
             // Handle non-expression assignments
             if (strcmp(value, "true") == 0) {
                 int boolValue = 1;
-                addVariable(name, BOOLEAN, &boolValue);
+                addVariable(name, BOOLEAN, &boolValue, 0);
             } else if (strcmp(value, "false") == 0) {
                 int boolValue = 0;
-                addVariable(name, BOOLEAN, &boolValue);
+                addVariable(name, BOOLEAN, &boolValue, 0);
             } else if (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1]))) {
                 if (isFloat(value)) {
                     float floatValue = parseFloat(value);
-                    addVariable(name, FLOAT, &floatValue);
+                    addVariable(name, FLOAT, &floatValue, 0);
                 } else {
                     int intValue = atoi(value);
-                    addVariable(name, INT, &intValue);
+                    addVariable(name, INT, &intValue, 0);
                 }
             } else if (value[0] == '"' || value[0] == '\'') {
                 size_t valueLength = strlen(value);
                 value[valueLength - 1] = '\0';
-                addVariable(name, STRING, value + 1);
+                addVariable(name, STRING, value + 1, 0);
             }
         }
 
