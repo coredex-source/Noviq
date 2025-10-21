@@ -4,7 +4,6 @@
 
 @@ A lot of missing features and bugs are to be expected. @@
 ```
-``````
 
 # Noviq
 
@@ -40,7 +39,6 @@ A simple, interpreted programming language written in C with a focus on clarity 
 
 ✅ **String Formatting** - Variable substitution with `%var1`, `%var2`, etc.```
 
-- Windows
 
 ## Documentation```
 
@@ -50,15 +48,8 @@ gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c -lm
 
 📖 [Language Reference](docs/language_reference.md)### Run using:
 
-- MacOS/Linux:
 
-## Project Structure```
-
-./noviq -e filename.nvq
-
-``````
-
-Noviq/- Windows (cmd):
+## Project Structure
 ```
 ├── src/
 │   ├── main.c                  # Entry pointnoviq.exe -e filename.nvq
