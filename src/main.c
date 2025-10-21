@@ -1,24 +1,28 @@
+#include "config.h"
+#include "interpreter.h"
+#include "error.h"
+#include "variables.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "lexer/lexer_interpret.h"
 
-#define LITECODE_VERSION "prealpha-v2.3"
 #ifdef _WIN32
+#include <io.h>
+#define F_OK 0
+#define access _access
+#else
+#include <unistd.h>
+#endif
+
 // Windows implementation of getline
+#ifdef _WIN32
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
     char *bufptr = NULL;
     char *p = bufptr;
     size_t size;
     int c;
 
-    if (lineptr == NULL) {
-        return -1;
-    }
-    if (stream == NULL) {
-        return -1;
-    }
-    if (n == NULL) {
+    if (lineptr == NULL || stream == NULL || n == NULL) {
         return -1;
     }
     bufptr = *lineptr;
@@ -60,39 +64,42 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
 }
 #endif
 
-#define MAX_IF_NESTING 32
-
 typedef struct {
-    char condition[256];
-    char content[4096];
-    char elseContent[4096];
+    char condition[NOVIQ_MAX_VAR_NAME_LENGTH];
+    char content[NOVIQ_MAX_LINE_LENGTH];
+    char elseContent[NOVIQ_MAX_LINE_LENGTH];
     int braceCount;
     int hasElse;
 } IfBlock;
 
 void displayHelp(const char *programName) {
-    printf("Noviq Interpreter\n");
+    printf("Noviq Interpreter %s\n", NOVIQ_VERSION_FULL);
     printf("Usage: %s [options] or %s -e <filename>\n\n", programName, programName);
     printf("Options:\n");
-    printf("  -e <filename>    Execute a Noviq script file\n");
-    printf("  --help          Display this help message\n");
-    printf("  --version       Display Noviq version\n");
+    printf("  -e <filename>      Execute a Noviq script file\n");
+    printf("  -h, --h, --help    Display this help message\n");
+    printf("  -v, --v, --version Display Noviq version\n");
 }
 
-// Function to read and execute commands from a file
 void executeFile(const char *filename) {
     // Check file extension
     const char *dot = strrchr(filename, '.');
-    if (!dot || strcmp(dot, ".nvq") != 0) {
-        fprintf(stderr, "Error: File must have .nvq extension\n");
+    if (!dot || strcmp(dot, NOVIQ_FILE_EXTENSION) != 0) {
+        fprintf(stderr, "Error: File must have %s extension\n", NOVIQ_FILE_EXTENSION);
         exit(EXIT_FAILURE);
+    }
+
+    // Check if file exists
+    if (access(filename, F_OK) != 0) {
+        reportError(ERROR_FILE, 0, "File '%s' not found", filename);
     }
 
     FILE *file = fopen(filename, "r");
     if (!file) {
-        perror("Error opening file");
-        return;
+        reportError(ERROR_FILE, 0, "Cannot open file '%s'", filename);
     }
+
+    setErrorFile(filename);
 
     char *line = NULL;
     size_t len = 0;
@@ -101,11 +108,13 @@ void executeFile(const char *filename) {
     int inMultilineComment = 0;
     
     // Stack of if blocks
-    IfBlock ifStack[MAX_IF_NESTING];
+    IfBlock ifStack[NOVIQ_MAX_IF_NESTING];
     int ifStackPtr = -1;
 
     while ((read = getline(&line, &len, file)) != -1) {
         lineNumber++;
+        setCurrentLine(lineNumber);
+
         if (line[read - 1] == '\n') {
             line[read - 1] = '\0';
         }
@@ -145,8 +154,7 @@ void executeFile(const char *filename) {
                             // Found else, look for its opening brace
                             char *elseBrace = strchr(elseStart, '{');
                             if (!elseBrace) {
-                                fprintf(stderr, "Error on line %d: Missing opening brace for else block\n", lineNumber);
-                                exit(EXIT_FAILURE);
+                                reportError(ERROR_SYNTAX, lineNumber, "Missing opening brace for else block");
                             }
                             ifStack[ifStackPtr].hasElse = 1;
                             *c = '\0'; // End if block here
@@ -158,7 +166,7 @@ void executeFile(const char *filename) {
                             sprintf(fullCmd, "if(%s){%s}", 
                                     ifStack[ifStackPtr].condition, 
                                     ifStack[ifStackPtr].content);
-                            interpretCommand(fullCmd, lineNumber);
+                            interpretCommand(fullCmd);
                             free(fullCmd);
                             ifStackPtr--;
                             *c = '\0';
@@ -185,7 +193,7 @@ void executeFile(const char *filename) {
                                 ifStack[ifStackPtr].condition,
                                 ifStack[ifStackPtr].content,
                                 ifStack[ifStackPtr].elseContent);
-                        interpretCommand(fullCmd, lineNumber);
+                        interpretCommand(fullCmd);
                         free(fullCmd);
                         ifStackPtr--;
                     }
@@ -200,17 +208,55 @@ void executeFile(const char *filename) {
         } else if (strncmp(trimmed, "if(", 3) == 0) {
             // Start new if block
             ifStackPtr++;
+            if (ifStackPtr >= NOVIQ_MAX_IF_NESTING) {
+                reportError(ERROR_RUNTIME, lineNumber, 
+                           "Maximum if-statement nesting depth (%d) exceeded", NOVIQ_MAX_IF_NESTING);
+            }
+
             ifStack[ifStackPtr].braceCount = 0;
             ifStack[ifStackPtr].content[0] = '\0';
             ifStack[ifStackPtr].elseContent[0] = '\0';
             ifStack[ifStackPtr].hasElse = 0;
             
-            // Extract condition
+            // Extract condition - need to handle nested parentheses and strings
             char *openParen = strchr(trimmed, '(');
-            char *closeParen = strchr(openParen, ')');
+            if (!openParen) {
+                reportError(ERROR_SYNTAX, lineNumber, "Missing opening parenthesis");
+            }
+            
+            // Find the matching closing parenthesis
+            char *closeParen = NULL;
+            int parenCount = 1;
+            int inString = 0;
+            char stringChar = 0;
+            char *ptr = openParen + 1;
+            
+            while (*ptr && parenCount > 0) {
+                // Handle string literals
+                if ((*ptr == '"' || *ptr == '\'') && !inString) {
+                    inString = 1;
+                    stringChar = *ptr;
+                } else if (inString && *ptr == stringChar) {
+                    inString = 0;
+                }
+                
+                // Only count parentheses outside of strings
+                if (!inString) {
+                    if (*ptr == '(') {
+                        parenCount++;
+                    } else if (*ptr == ')') {
+                        parenCount--;
+                        if (parenCount == 0) {
+                            closeParen = ptr;
+                            break;
+                        }
+                    }
+                }
+                ptr++;
+            }
+            
             if (!closeParen) {
-                fprintf(stderr, "Error on line %d: Missing closing parenthesis\n", lineNumber);
-                exit(EXIT_FAILURE);
+                reportError(ERROR_SYNTAX, lineNumber, "Missing closing parenthesis");
             }
             
             strncpy(ifStack[ifStackPtr].condition, 
@@ -222,31 +268,56 @@ void executeFile(const char *filename) {
             char *content = strchr(closeParen, '{');
             if (content) {
                 ifStack[ifStackPtr].braceCount = 1;
-                strcat(ifStack[ifStackPtr].content, content + 1);
                 
-                // Check if it's a single-line if
-                if (strchr(content, '}')) {
-                    char *fullCmd = malloc(strlen(trimmed) + 1);
-                    strcpy(fullCmd, trimmed);
-                    interpretCommand(fullCmd, lineNumber);
-                    free(fullCmd);
-                    ifStackPtr--;
+                // Extract content after opening brace, trimming whitespace
+                char *contentStart = content + 1;
+                while (*contentStart == ' ' || *contentStart == '\t') contentStart++;
+                
+                // Check if the if statement is complete on this line
+                // Count remaining braces to see if it closes
+                int braceCount = 1;
+                char *ptr = content + 1;
+                while (*ptr) {
+                    if (*ptr == '{') braceCount++;
+                    else if (*ptr == '}') {
+                        braceCount--;
+                        if (braceCount == 0) {
+                            // Found the matching closing brace - single line if
+                            char *fullCmd = malloc(strlen(trimmed) + 1);
+                            strcpy(fullCmd, trimmed);
+                            interpretCommand(fullCmd);
+                            free(fullCmd);
+                            ifStackPtr--;
+                            break;
+                        }
+                    }
+                    ptr++;
+                }
+                
+                // If we didn't find the closing brace, it's a multi-line if
+                if (ifStackPtr >= 0 && braceCount > 0) {
+                    // Don't store the opening brace line content if it's just whitespace
+                    if (*contentStart != '\0') {
+                        strcat(ifStack[ifStackPtr].content, contentStart);
+                    }
                 }
             }
         }
         else if (ifStackPtr < 0) {
             // Regular command outside if block
-            interpretCommand(trimmed, lineNumber);
+            interpretCommand(trimmed);
         }
     }
 
     if (ifStackPtr >= 0) {
-        fprintf(stderr, "Error: Unclosed if block at end of file\n");
-        exit(EXIT_FAILURE);
+        reportError(ERROR_SYNTAX, 0, "Unclosed if block at end of file");
     }
 
     free(line);
     fclose(file);
+    
+    // Cleanup
+    freeAllVariables();
 }
 
 int main(int argc, char *argv[]) {
@@ -255,13 +326,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (strcmp(argv[1], "--help") == 0) {
+    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0) {
         displayHelp(argv[0]);
         return 0;
     }
 
-    if (strcmp(argv[1], "--version") == 0) {
-        printf("%s\n", LITECODE_VERSION);
+    if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--v") == 0) {
+        printf("%s\n", NOVIQ_VERSION_FULL);
         return 0;
     }
 

@@ -1,0 +1,26 @@
+# Control Flow Example
+# Simple if statement
+x = 5
+if(x > 3){ display("x is greater than 3") }
+
+# If-else statement  
+age = 18
+if(age >= 18){ display("You are an adult") } else { display("You are a minor") }
+
+# Nested if statements
+score = 85
+if(score >= 90){ display("Grade: A") } else { if(score >= 80){ display("Grade: B") } else { if(score >= 70){ display("Grade: C") } else { display("Grade: F") } } }
+
+# Comparison operators
+a = 10
+b = 20
+c1 = a > b
+c2 = a < b
+c3 = a >= 10
+c4 = b <= 20
+c5 = a == 10
+display("a > b: %var1", c1)
+display("a < b: %var1", c2)
+display("a >= 10: %var1", c3)
+display("b <= 20: %var1", c4)
+display("a == 10: %var1", c5)

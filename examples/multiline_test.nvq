@@ -1,0 +1,40 @@
+# Multi-line Statement Test
+# This file demonstrates that Noviq now supports multi-line if statements
+
+x = 10
+
+# Single-line if statement (still works)
+if(x > 5){display("x is greater than 5")}
+
+# Multi-line if statement with one line of code
+if(x > 5){
+    display("x is still greater than 5")
+}
+
+# Multi-line if statement with multiple lines
+if(x == 10){
+    display("x equals 10")
+    display("This is the second line")
+    display("And this is the third line")
+}
+
+# Multi-line if-else (else must be on same line as closing brace)
+age = 25
+if(age >= 18){
+    display("You are an adult")
+    display("You can vote")
+} else {
+    display("You are a minor")
+    display("Wait a few more years")
+}
+
+# Simple nested if
+score = 85
+if(score >= 80){
+    display("Grade: B or better")
+    if(score >= 90){
+        display("Actually, it's an A!")
+    }
+}
+
+display("All tests passed!")

@@ -1,0 +1,14 @@
+# Hello World Example
+# This is the simplest Noviq program
+
+display("Hello, World!")
+display("Welcome to Noviq programming language!")
+
+# Variables
+name = "Noviq"
+version = 2.3
+year = 2025
+
+display("Language: %var1", name)
+display("Version: %var1", version)
+display("Year: %var1", year)
