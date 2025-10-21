@@ -7,7 +7,7 @@
 
 # Noviq
 
-# Noviq- The name Noviq is make up of two words: Nova(which means new) and unique.
+Noviq- The name Noviq is make up of two words: Nova(which means new) and unique.
 
 - So, Nova + unique = Noviq.
 
@@ -204,8 +204,8 @@ GPL-3.0 - See [LICENSE](LICENSE) for details.
 
 ## Version
 
-Current version: **prealpha-v2.3.0**
+Current version: **alpha-v1.0.0**
 
 ---
 
-*Note: This project is in pre-alpha development. Features may change, and bugs are expected.*
+*Note: This project is in alpha development. Features may change, and bugs are expected.*
