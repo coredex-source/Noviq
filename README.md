@@ -1,9 +1,9 @@
-```diff```diff
+```diff
 
-@@ The language is currently in PreAlpha development stages. @@@@ The language is currently in PreAlpha development stages. @@
+@@ The language is currently in Alpha development stages. @@
 
-@@ A lot of missing features and bugs are to be expected.    @@@@ A lot of missing features and bugs are to be expected.    @@
-
+@@ A lot of missing features and bugs are to be expected. @@
+```
 ``````
 
 # Noviq
@@ -59,13 +59,10 @@ gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c -lm
 ``````
 
 Noviq/- Windows (cmd):
-
-├── src/```
-
+```
+├── src/
 │   ├── main.c                  # Entry pointnoviq.exe -e filename.nvq
-
-│   ├── interpreter/            # Core interpreter```
-
+│   ├── interpreter/            # Core interpreter
 │   │   ├── interpreter.c       # Command interpretation
 │   │   ├── variables.c         # Variable management
 │   │   └── expressions.c       # Expression evaluation
