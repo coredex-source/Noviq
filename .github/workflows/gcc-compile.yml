@@ -46,7 +46,7 @@ jobs:
     - name: Build (Windows)
       if: runner.os == 'Windows'
       run: |
-        gcc -o noviq.exe noviq.c lexer/lexer_interpret.c lexer/lexer_display.c
+        build.bat
 
     - name: Upload artifact (Windows/Linux)
       if: runner.os != 'macOS'
