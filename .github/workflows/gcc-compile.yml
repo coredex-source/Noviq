@@ -46,7 +46,7 @@ jobs:
     - name: Build (Windows)
       if: runner.os == 'Windows'
       run: |
-        build.bat
+        ./build.bat
 
     - name: Upload artifact (Windows/Linux)
       if: runner.os != 'macOS'
