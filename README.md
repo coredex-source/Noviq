@@ -42,7 +42,7 @@ GPL-3.0 - See [LICENSE](LICENSE) for details.
 - **Alpha (Protostar)**: `protostar-x.x.x`
 - **Beta (Nova)**: `nova-x.x.x`
 - **Release (Supernova)**: `supernova-x.x.x`
-- **Snapshots (Pulsar)**: `type-x.x.x-pulsar.YYMMDD`
+- **Snapshots (Pulsar)**: `type-x.x.x-pulsar.YYMMDD.GITHASH`
 
 Current version: **nebula-0.0.0**
 Snapshot/Github Actions Build version scheme: **nebula-0.0.1-pulsar.YYMMDD**
