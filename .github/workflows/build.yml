@@ -136,19 +136,3 @@ jobs:
     - name: Get current date
       id: date
       run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: snapshot-${{ steps.date.outputs.date }}-${{ github.run_number }}
-        name: Snapshot Build ${{ steps.date.outputs.date }}
-        draft: false
-        prerelease: true
-        files: artifacts/**/*
-        body: |
-          Automated snapshot build from commit ${{ github.sha }}
-          
-          Built on: ${{ steps.date.outputs.date }}
-          Commit: ${{ github.event.head_commit.message }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
