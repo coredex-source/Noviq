@@ -23,8 +23,8 @@ Basic hello world program demonstrating:
 ### `test.nvq`
 Basic test file for development
 
-## Current Language Features
+## Features Demonstrated
 
-- **Comments**: `# This is a comment`
-- **String literals**: `"Hello, World!"`
-- **Function calls**: `log("message")`
+- Comments (lines starting with `#`)
+- Print statements with `print()`
+- String literals

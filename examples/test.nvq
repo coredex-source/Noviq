@@ -1,5 +1,5 @@
 # Basic test
 
-log("Testing")
-log("Multiple")
-log("Lines")
+print("Testing")
+print("Multiple")
+print("Lines")

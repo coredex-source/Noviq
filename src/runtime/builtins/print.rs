@@ -1,11 +1,11 @@
-// runtime/builtins/log.rs
-// Implementation of the log() built-in function.
+// runtime/builtins/print.rs
+// Implementation of the print() built-in function.
 // Prints values to stdout, separated by spaces.
 
 use crate::frontend::ast::Expr;
 use crate::runtime::value::Value;
 
-/// Implements the `log` builtin.
+/// Implements the `print` builtin.
 ///
 /// Evaluates each argument using the provided evaluator and prints them separated by spaces.
 pub fn call<F>(args: Vec<Expr>, eval: &mut F) -> Result<Value, String>

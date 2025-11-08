@@ -33,7 +33,7 @@ Noviq/
 │       ├── value.rs             # Runtime value types
 │       ├── builtins/            # Built-in functions
 │       │   ├── mod.rs           # Builtin router
-│       │   └── log.rs           # log() function
+│       │   └── print.rs         # print() function
 │       └── interpreter/         # Execution engine
 │           ├── mod.rs           # Interpreter main logic
 │           ├── expr.rs          # Expression evaluation
@@ -83,10 +83,10 @@ Tokenization and parsing:
 
 ### `runtime/`
 Execution and built-in functions:
-- `value.rs` - Runtime value types
-- `builtins/` - Built-in function implementations
+- **value.rs** - Runtime value types
+- **builtins/** - Built-in function implementations
   - `mod.rs` - Builtin function router
-  - `log.rs` - The `log()` function
+  - `print.rs` - The `print()` function
 - `interpreter/` - Execution engine
   - `mod.rs` - Main interpreter logic
   - `expr.rs` - Expression evaluator
@@ -109,7 +109,7 @@ Example Noviq programs (`.nvq` extension):
 The interpreter currently supports:
 - **Comments**: Lines starting with `#`
 - **String literals**: Double-quoted strings with escape sequences
-- **Function calls**: `log("message")` - prints to stdout
+- **Function calls**: `print("message")` - prints to stdout
 
 ## Module Organization
 
@@ -133,7 +133,7 @@ runtime/
 ├── value.rs           - Value enum (String, Null)
 ├── builtins/
 │   ├── mod.rs         - Routes builtin calls by name
-│   └── log.rs         - log() implementation
+│   └── print.rs       - print() implementation
 └── interpreter/
     ├── mod.rs         - Main interpreter
     ├── expr.rs        - Expression evaluator

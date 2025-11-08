@@ -24,7 +24,7 @@ mod tests {
             .expect("Should be able to read hello.nvq");
         
         assert!(contents.contains("Hello, World!"), "Should contain greeting");
-        assert!(contents.contains("log"), "Should contain log statements");
+        assert!(contents.contains("print"), "Should contain print statements");
     }
 
     #[test]
@@ -32,7 +32,7 @@ mod tests {
         let contents = fs::read_to_string("examples/test.nvq")
             .expect("Should be able to read test.nvq");
         
-        assert!(contents.contains("log"), "Should contain log statements");
+        assert!(contents.contains("print"), "Should contain print statements");
     }
 
     #[test]
@@ -45,7 +45,7 @@ mod tests {
         // Check for string literals
         assert!(hello.contains("\""), "Should have string literals");
         
-        // Check for log function
-        assert!(hello.contains("log"), "Should have log function calls");
+        // Check for print function
+        assert!(hello.contains("print"), "Should have print function calls");
     }
 }

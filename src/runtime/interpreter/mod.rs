@@ -45,7 +45,7 @@ mod tests {
     
     #[test]
     fn test_execute_function_call() {
-        let mut parser = Parser::new(r#"log("Hello")"#);
+        let mut parser = Parser::new(r#"print("Hello")"#);
         let stmts = parser.parse().unwrap();
         let mut interpreter = Interpreter::new();
         assert!(interpreter.execute(stmts).is_ok());

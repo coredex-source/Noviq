@@ -34,7 +34,7 @@ src/
     │
     ├── builtins/                # Built-in functions
     │   ├── mod.rs               # Function router
-    │   └── log.rs               # log() implementation
+    │   └── print.rs             # print() implementation
     │
     └── interpreter/             # Execution
         ├── mod.rs               # Main interpreter
@@ -58,7 +58,7 @@ src/
 ### Runtime
 - **value.rs**: Runtime value types
 - **builtins/**: Built-in functions (each function gets its own file)
-  - `log.rs`: The `log()` function
+  - `print.rs`: The `print()` function
   - `mod.rs`: Routes function calls
 - **interpreter/**: Executes AST
   - `expr.rs`: Evaluates expressions
@@ -81,7 +81,7 @@ src/
 
 ### Adding a new builtin function:
 1. Create `src/runtime/builtins/myfunction.rs`
-2. Implement the function following the pattern in `log.rs`
+2. Implement the function following the pattern in `print.rs`
 3. Add it to `src/runtime/builtins/mod.rs`
 
 ### Extending the lexer:

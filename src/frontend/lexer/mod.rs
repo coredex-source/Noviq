@@ -92,16 +92,16 @@ mod tests {
     
     #[test]
     fn test_tokenize_identifier() {
-        let mut lexer = Lexer::new("log");
+        let mut lexer = Lexer::new("print");
         let tokens = lexer.tokenize();
-        assert_eq!(tokens[0], Token::Identifier("log".to_string()));
+        assert_eq!(tokens[0], Token::Identifier("print".to_string()));
     }
     
     #[test]
     fn test_tokenize_function_call() {
-        let mut lexer = Lexer::new(r#"log("Hello")"#);
+        let mut lexer = Lexer::new(r#"print("Hello")"#);
         let tokens = lexer.tokenize();
-        assert_eq!(tokens[0], Token::Identifier("log".to_string()));
+        assert_eq!(tokens[0], Token::Identifier("print".to_string()));
         assert_eq!(tokens[1], Token::LeftParen);
         assert_eq!(tokens[2], Token::String("Hello".to_string()));
         assert_eq!(tokens[3], Token::RightParen);
