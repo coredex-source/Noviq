@@ -1,0 +1,138 @@
+name: Build Noviq for All Platforms
+
+on:
+  push:
+    branches: [ main, Rust-reimpl ]
+  pull_request:
+    branches: [ main, Rust-reimpl ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: noviq
+            asset_extension: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: noviq.exe
+            asset_extension: .exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: noviq
+            asset_extension: ''
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: noviq
+            asset_extension: ''
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+
+    - name: Cache target directory
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-${{ matrix.target }}-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-target-
+
+    - name: Build snapshot (optimized)
+      run: |
+        cargo build --profile snapshot --target ${{ matrix.target }}
+      env:
+        SNAPSHOT: 1
+
+    - name: Get version
+      id: version
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          VERSION=$(./target/${{ matrix.target }}/snapshot/noviq.exe | grep "Version:" | awk '{print $2}')
+        else
+          VERSION=$(./target/${{ matrix.target }}/snapshot/noviq | grep "Version:" | awk '{print $2}')
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: Prepare artifact name
+      id: artifact
+      shell: bash
+      run: |
+        OS_NAME="${{ runner.os }}"
+        OS_LOWER=$(echo "$OS_NAME" | tr '[:upper:]' '[:lower:]')
+        TARGET="${{ matrix.target }}"
+        ARCH=$(echo "$TARGET" | cut -d'-' -f1)
+        VERSION="${{ steps.version.outputs.version }}"
+        ARTIFACT_NAME="noviq-${VERSION}-${OS_LOWER}-${ARCH}${{ matrix.asset_extension }}"
+        echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        echo "Artifact name: $ARTIFACT_NAME"
+
+    - name: Rename and prepare artifact
+      shell: bash
+      run: |
+        mkdir -p artifacts
+        cp target/${{ matrix.target }}/snapshot/${{ matrix.artifact_name }} artifacts/${{ steps.artifact.outputs.name }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact.outputs.name }}
+        path: artifacts/${{ steps.artifact.outputs.name }}
+        if-no-files-found: error
+
+    - name: Display artifact info
+      shell: bash
+      run: |
+        ls -lh artifacts/
+        file artifacts/${{ steps.artifact.outputs.name }} || true
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Rust-reimpl')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display downloaded artifacts
+      run: |
+        ls -R artifacts/
+
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
