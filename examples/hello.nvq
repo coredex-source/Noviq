@@ -1,0 +1,6 @@
+# Hello World Example
+# This is a simple Noviq program
+
+log("Hello, World!")
+log("Welcome to Noviq!")
+log("This is a test of the log function")

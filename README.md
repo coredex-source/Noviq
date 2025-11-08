@@ -11,10 +11,12 @@ Noviq- The name Noviq is make up of two words: Nova(which means new) and unique.
 
 - So, Nova + unique = Noviq.
 
-**Noviq** = **Nova** (new) + **unique**- Noviq is just a simple compiled programming language writtin in Rust which aims to be independent in the future, i.e, being writtin in Noviq itself similar to how rust does it.
+**Noviq** = **Nova** (new) + **unique**- Noviq is just a simple interpreted programming language writtin in Rust which aims to be independent in the future, i.e, being writtin in Noviq itself similar to how rust does it.
 
-A simple, compiled programming language written in Rust with a focus on clarity and ease of use.
+A simple, interpreted programming language written in Rust with a focus on clarity and ease of use.
 A language written to have an easy syntax and high performance.
+
+Noviq aims to be a compiled language instead of an interpreted language in the future.
 
 ## Building
 
