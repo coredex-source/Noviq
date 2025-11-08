@@ -44,6 +44,13 @@ fn main() {
     // Try to read and execute the file
     let filename = &args[1];
     
+    // Check if file has .nvq extension
+    if !filename.ends_with(".nvq") {
+        eprintln!("Error: File must have .nvq extension");
+        eprintln!("Usage: noviq <file.nvq>");
+        process::exit(1);
+    }
+    
     match fs::read_to_string(filename) {
         Ok(contents) => {
             if let Err(e) = execute_program(&contents) {

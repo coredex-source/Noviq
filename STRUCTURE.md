@@ -156,9 +156,16 @@ cargo build
 # Release build
 cargo build --release
 
-# Snapshot build (optimized but with pulsar timestamp)
+# Snapshot build (optimized with pulsar timestamp and git commit hash)
 SNAPSHOT=1 cargo build --profile=snapshot
 ```
+
+Version format:
+- **Debug**: `nebula-X.Y.Z-pulsar.YYMMDD`
+- **Snapshot**: `nebula-X.Y.Z-pulsar.YYMMDD.GITHASH`
+- **Release**: `nebula-X.Y.Z`
+
+The git commit hash ensures snapshot builds have a unique identifier that stays the same unless changes are committed.
 
 ## Testing
 
