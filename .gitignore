@@ -1,4 +1,17 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# Build outputs
+/libs/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
-/.vscode
-noviq
-noviq.exe
+Thumbs.db

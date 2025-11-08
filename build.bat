@@ -1,33 +1,69 @@
 @echo off
-REM Build script for Noviq on Windows
-REM Requires GCC (MinGW or similar) to be installed and in PATH
+REM Unified build script for Noviq (Windows CMD)
 
-echo Building Noviq...
+if not exist libs mkdir libs
 
-gcc -o noviq.exe -Iinclude ^
-    src\main.c ^
-    src\interpreter\interpreter.c ^
-    src\interpreter\variables.c ^
-    src\interpreter\expressions.c ^
-    src\operators\arithmetic.c ^
-    src\operators\logical.c ^
-    src\operators\comparison.c ^
-    src\statements\display.c ^
-    src\statements\input.c ^
-    src\statements\control_flow.c ^
-    src\utils\error.c ^
-    -lm
+if "%1"=="--release" goto release
+if "%1"=="--snapshot" goto snapshot
+if "%1"=="" goto debug
+goto usage
 
-if %ERRORLEVEL% EQU 0 (
-    echo.
-    echo Build successful! Executable: noviq.exe
-    echo.
-    echo Usage:
-    echo   noviq.exe -e ^<file^>    Execute a Noviq script
-    echo   noviq.exe -h          Show help
-    echo.
-) else (
-    echo.
-    echo Build failed with error code %ERRORLEVEL%
-    exit /b %ERRORLEVEL%
-)
+:debug
+echo Building Noviq (Debug)...
+cargo build
+if errorlevel 1 exit /b 1
+
+for /f "tokens=2" %%i in ('target\debug\noviq.exe ^| findstr "Version:"') do set VERSION=%%i
+set OUTPUT_NAME=noviq-%VERSION%-windows-x86_64.exe
+copy target\debug\noviq.exe libs\%OUTPUT_NAME% >nul
+
+echo.
+echo Debug build complete!
+echo Binary copied to: libs\%OUTPUT_NAME%
+echo.
+target\debug\noviq.exe
+goto end
+
+:release
+echo Building Noviq (Release)...
+cargo build --release
+if errorlevel 1 exit /b 1
+
+for /f "tokens=2" %%i in ('target\release\noviq.exe ^| findstr "Version:"') do set VERSION=%%i
+set OUTPUT_NAME=noviq-%VERSION%-windows-x86_64.exe
+copy target\release\noviq.exe libs\%OUTPUT_NAME% >nul
+
+echo.
+echo Release build complete!
+echo Binary copied to: libs\%OUTPUT_NAME%
+echo.
+target\release\noviq.exe
+goto end
+
+:snapshot
+echo Building Noviq (Snapshot)...
+set SNAPSHOT=1
+cargo build --profile snapshot
+if errorlevel 1 exit /b 1
+
+for /f "tokens=2" %%i in ('target\snapshot\noviq.exe ^| findstr "Version:"') do set VERSION=%%i
+set OUTPUT_NAME=noviq-%VERSION%-windows-x86_64.exe
+copy target\snapshot\noviq.exe libs\%OUTPUT_NAME% >nul
+
+echo.
+echo Snapshot build complete!
+echo Binary copied to: libs\%OUTPUT_NAME%
+echo.
+target\snapshot\noviq.exe
+goto end
+
+:usage
+echo Usage: build.bat [--release^|--snapshot]
+echo.
+echo Options:
+echo   (no flag)   Build in debug mode with snapshot version
+echo   --release   Build optimized release with clean version
+echo   --snapshot  Build optimized snapshot with dated version
+exit /b 1
+
+:end
