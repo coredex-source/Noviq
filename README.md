@@ -18,7 +18,35 @@ A language written to have an easy syntax and high performance.
 
 Noviq aims to be a compiled language instead of an interpreted language in the future.
 
+Builder tool for interpreter version is called: Photon or Photon-NVQ
+The compiler will be called: Singularity or Singularity-NVQ
+
 ## Building
+
+### Using Photon (Recommended)
+
+Photon is the official build tool for Noviq, providing a unified cross-platform build experience:
+
+```bash
+# Build Photon first
+cd photon
+cargo build --release
+
+# Use Photon to build Noviq
+./target/release/photon build              # Debug build
+./target/release/photon build release      # Release build
+./target/release/photon build snapshot     # Snapshot build with git hash
+
+# Install binaries to libs/
+./target/release/photon install
+
+# Clean build artifacts
+./target/release/photon clean
+```
+
+See [photon/README.md](photon/README.md) for more details.
+
+### Using Build Scripts (Legacy)
 
 ```bash
 ./build.sh              # Debug build

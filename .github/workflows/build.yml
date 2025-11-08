@@ -116,23 +116,3 @@ jobs:
       run: |
         ls -lh artifacts/
         file artifacts/${{ steps.artifact.outputs.name }} || true
-
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Rust-reimpl')
-    
-    steps:
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-
-    - name: Display downloaded artifacts
-      run: |
-        ls -R artifacts/
-
-    - name: Get current date
-      id: date
-      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT

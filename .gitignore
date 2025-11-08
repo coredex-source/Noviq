@@ -2,6 +2,10 @@
 /target/
 Cargo.lock
 
+# Photon build artifacts
+/photon/target/
+/photon/Cargo.lock
+
 # Build outputs
 /libs/
 
