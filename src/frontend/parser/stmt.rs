@@ -27,6 +27,12 @@ impl<'a> StmtParser<'a> {
     }
     
     pub fn parse(&mut self) -> Result<Stmt, String> {
+        // Check for let statement
+        if self.current() == &Token::Let {
+            return self.parse_let();
+        }
+        
+        // Otherwise, parse as expression statement
         let mut expr_parser = ExprParser::new(self.tokens, self.position);
         let expr = expr_parser.parse()?;
         
@@ -36,5 +42,33 @@ impl<'a> StmtParser<'a> {
         }
         
         Ok(Stmt::Expr(expr))
+    }
+    
+    fn parse_let(&mut self) -> Result<Stmt, String> {
+        self.advance(); // Skip 'let'
+        
+        // Get variable name
+        let name = match self.current() {
+            Token::Identifier(n) => n.clone(),
+            _ => return Err("Expected identifier after 'let'".to_string()),
+        };
+        self.advance();
+        
+        // Expect '='
+        if self.current() != &Token::Assign {
+            return Err("Expected '=' after variable name".to_string());
+        }
+        self.advance();
+        
+        // Parse value expression
+        let mut expr_parser = ExprParser::new(self.tokens, self.position);
+        let value = expr_parser.parse()?;
+        
+        // Skip optional newline
+        if self.current() == &Token::Newline {
+            self.advance();
+        }
+        
+        Ok(Stmt::Let { name, value })
     }
 }

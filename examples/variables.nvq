@@ -1,0 +1,11 @@
+# Variable declaration test
+
+let message = "Hello from a variable!"
+let number = 42
+let pi = 3.14
+let flag = true
+
+print(message)
+print(number)
+print(pi)
+print(flag)

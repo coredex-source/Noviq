@@ -50,4 +50,23 @@ mod tests {
         let mut interpreter = Interpreter::new();
         assert!(interpreter.execute(stmts).is_ok());
     }
+    
+    #[test]
+    fn test_variable_declaration() {
+        let mut parser = Parser::new(r#"let x = 42"#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
+    
+    #[test]
+    fn test_variable_usage() {
+        let mut parser = Parser::new(r#"
+            let msg = "Hello"
+            print(msg)
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
 }

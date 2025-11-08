@@ -4,15 +4,19 @@
 
 /// AST node definitions for Noviq
 ///
-/// Kept minimal for the current language subset (string literals and function calls)
+/// Expressions and statements for the Noviq language
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     String(String),
+    Number(f64),
+    Boolean(bool),
+    Identifier(String),
     Call { name: String, args: Vec<Expr> },
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
+    Let { name: String, value: Expr },
     Expr(Expr),
 }

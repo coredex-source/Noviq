@@ -42,17 +42,30 @@ impl<'a> ExprParser<'a> {
                 self.advance();
                 Ok(Expr::String(s))
             }
+            Token::Number(n) => {
+                self.advance();
+                Ok(Expr::Number(n))
+            }
+            Token::True => {
+                self.advance();
+                Ok(Expr::Boolean(true))
+            }
+            Token::False => {
+                self.advance();
+                Ok(Expr::Boolean(false))
+            }
             Token::Identifier(name) => {
                 self.advance();
                 
-                // Must be a function call
+                // Check if it's a function call
                 if self.current() == &Token::LeftParen {
                     self.advance(); // consume '('
                     let args = self.parse_arguments()?;
                     self.expect(Token::RightParen)?;
                     Ok(Expr::Call { name, args })
                 } else {
-                    Err(format!("Expected '(' after identifier '{}'", name))
+                    // Just an identifier (variable reference)
+                    Ok(Expr::Identifier(name))
                 }
             }
             token => Err(format!("Unexpected token in expression: {:?}", token)),

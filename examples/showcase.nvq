@@ -1,0 +1,22 @@
+# Comprehensive example showcasing Noviq features
+
+# Variable declarations with different types
+let greeting = "Hello, Noviq!"
+let name = 'World'
+let answer = 42
+let pi = 3.14159
+let is_cool = true
+let is_boring = false
+
+# Print variables
+print(greeting)
+print(name)
+print(answer)
+print(pi)
+print(is_cool)
+print(is_boring)
+
+# Direct values in print
+print("Direct string")
+print(123)
+print(true)

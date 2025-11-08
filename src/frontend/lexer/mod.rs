@@ -43,9 +43,23 @@ impl Lexer {
                 self.reader.advance();
                 Token::Newline
             }
-            Some('"') => Token::String(self.reader.read_string()),
+            Some('"') | Some('\'') => Token::String(self.reader.read_string()),
+            Some('=') => {
+                self.reader.advance();
+                Token::Assign
+            }
             Some(ch) if ch.is_alphabetic() || ch == '_' => {
-                Token::Identifier(self.reader.read_identifier())
+                let ident = self.reader.read_identifier();
+                // Check for keywords
+                match ident.as_str() {
+                    "let" => Token::Let,
+                    "true" => Token::True,
+                    "false" => Token::False,
+                    _ => Token::Identifier(ident),
+                }
+            }
+            Some(ch) if ch.is_numeric() => {
+                Token::Number(self.reader.read_number())
             }
             Some('(') => {
                 self.reader.advance();

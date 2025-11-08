@@ -1,0 +1,7 @@
+# Testing both quote types
+
+let double_quote = "String with double quotes"
+let single_quote = 'String with single quotes'
+
+print(double_quote)
+print(single_quote)

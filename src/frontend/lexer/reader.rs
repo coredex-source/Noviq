@@ -45,11 +45,12 @@ impl Reader {
     }
     
     pub fn read_string(&mut self) -> String {
+        let quote_char = self.current.unwrap(); // Remember which quote (' or ")
         let mut result = String::new();
         self.advance(); // Skip opening quote
         
         while let Some(ch) = self.current {
-            if ch == '"' {
+            if ch == quote_char {
                 self.advance(); // Skip closing quote
                 break;
             } else if ch == '\\' {
@@ -60,6 +61,7 @@ impl Reader {
                         't' => result.push('\t'),
                         'r' => result.push('\r'),
                         '"' => result.push('"'),
+                        '\'' => result.push('\''),
                         '\\' => result.push('\\'),
                         _ => {
                             result.push('\\');
@@ -75,6 +77,21 @@ impl Reader {
         }
         
         result
+    }
+    
+    pub fn read_number(&mut self) -> f64 {
+        let mut num_str = String::new();
+        
+        while let Some(ch) = self.current {
+            if ch.is_numeric() || ch == '.' {
+                num_str.push(ch);
+                self.advance();
+            } else {
+                break;
+            }
+        }
+        
+        num_str.parse().unwrap_or(0.0)
     }
     
     pub fn read_identifier(&mut self) -> String {
