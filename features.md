@@ -610,7 +610,9 @@
 - [ ] x86 (32-bit)
 - [x] ARM64 (aarch64)
 - [ ] RISC-V
+
 // Won't add official support:
+
 - [ ] ARM (32-bit)
 - [ ] MIPS
 - [ ] PowerPC

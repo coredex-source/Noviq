@@ -24,7 +24,7 @@ The compiler will be called: Singularity or Singularity-NVQ
 First release of Noviq is expected to be Nebula-1.0.0 (Pre-alpha).
 
 ## Implementation:
-See features.md
+See features.md or PRIORITIES.md
 
 ## Building
 
