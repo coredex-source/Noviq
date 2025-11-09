@@ -47,6 +47,7 @@ Noviq is a simple, interpreted programming language written in Rust with a focus
 - ✅ **Comments**: Single-line comments with `#`
 - ✅ **Variables**: Declaration with `let` keyword
 - ✅ **String Literals**: Both single (`'`) and double (`"`) quotes
+- ✅ **String Interpolation**: Variables in strings with `{variable_name}` syntax
 - ✅ **Numbers**: Integers and floating-point numbers
 - ✅ **Booleans**: `true` and `false` literals
 - ✅ **Print Function**: `print()` for output
@@ -107,6 +108,11 @@ let greeting = 'Hello'
 
 # Escape sequences
 let multiline = "Line 1\nLine 2\tTabbed"
+
+# String interpolation
+let age = 25
+print("I am {age} years old")
+print("Hello {name}, you are {age}!")
 ```
 
 **Supported Escape Sequences**:
@@ -116,6 +122,11 @@ let multiline = "Line 1\nLine 2\tTabbed"
 - `\"` - Double quote
 - `\'` - Single quote
 - `\\` - Backslash
+
+**String Interpolation**:
+- Use `{variable_name}` to insert variables into strings
+- Works with all value types (strings, numbers, booleans)
+- Escape literal braces with `{{` and `}}`
 
 #### Numbers
 
@@ -162,6 +173,9 @@ Prints a value to standard output followed by a newline.
 
 **Returns**: Nothing (null)
 
+**String Interpolation**:
+Strings support variable interpolation using `{variable_name}` syntax.
+
 **Examples**:
 ```noviq
 print("Hello")              # Prints: Hello
@@ -170,6 +184,18 @@ print(true)                 # Prints: true
 
 let name = "Alice"
 print(name)                 # Prints: Alice
+
+# String interpolation
+let age = 25
+print("I am {age}")         # Prints: I am 25
+print("Hello {name}!")      # Prints: Hello Alice!
+
+# Multiple variables
+let city = "NYC"
+print("{name} lives in {city}")  # Prints: Alice lives in NYC
+
+# Escaped braces
+print("Literal {{braces}}")      # Prints: Literal {braces}
 ```
 
 ---
@@ -287,7 +313,25 @@ String with double quotes
 String with single quotes
 ```
 
-### Comprehensive Showcase
+### String Interpolation
+
+```noviq
+# interpolation.nvq
+let name = "Alice"
+let age = 25
+let city = "Wonderland"
+
+print("My name is {name}")
+print("I am {age} years old")
+print("Hello {name}, welcome to {city}!")
+```
+
+**Output**:
+```
+My name is Alice
+I am 25 years old
+Hello Alice, welcome to Wonderland!
+```
 
 ```noviq
 # showcase.nvq
@@ -494,11 +538,12 @@ Traditional shell scripts are still available:
 **What Works**:
 - ✅ Basic syntax parsing
 - ✅ Variable declarations
-- ✅ Print function
+- ✅ Print function with string interpolation
 - ✅ Comments
 - ✅ String, number, and boolean literals
 - ✅ Variable references
 - ✅ Single and double quoted strings
+- ✅ String interpolation with `{variable}` syntax
 
 **Known Limitations**:
 - ⚠️ No arithmetic operations yet

@@ -1,6 +1,6 @@
 [package]
 name = "noviq"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Noviq Contributors"]
 description = "A simple, interpreted programming language written in Rust"

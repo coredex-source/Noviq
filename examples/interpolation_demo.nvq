@@ -1,0 +1,26 @@
+# Comprehensive string interpolation demo
+
+let name = "Bob"
+let age = 30
+let height = 5.9
+let is_student = false
+let score = 87.5
+
+# Basic interpolation
+print("Name: {name}")
+print("Age: {age} years")
+print("Height: {height} feet")
+print("Student: {is_student}")
+print("Score: {score}%")
+
+# Multiple variables in one string
+print("{name} is {age} years old and {height} feet tall")
+
+# Mixed with text
+print("User Profile: {name}, Age {age}, Score: {score}%")
+
+# Edge cases
+print("No variables here")
+print("Escaped braces: {{variable}}")
+let test = "value"
+print("Mixed: {test} and {{escaped}}")

@@ -69,4 +69,69 @@ mod tests {
         let mut interpreter = Interpreter::new();
         assert!(interpreter.execute(stmts).is_ok());
     }
+    
+    #[test]
+    fn test_string_interpolation_basic() {
+        let mut parser = Parser::new(r#"
+            let name = "Alice"
+            print("Hello {name}")
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
+    
+    #[test]
+    fn test_string_interpolation_number() {
+        let mut parser = Parser::new(r#"
+            let age = 25
+            print("Age: {age}")
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
+    
+    #[test]
+    fn test_string_interpolation_boolean() {
+        let mut parser = Parser::new(r#"
+            let flag = true
+            print("Status: {flag}")
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
+    
+    #[test]
+    fn test_string_interpolation_multiple() {
+        let mut parser = Parser::new(r#"
+            let name = "Bob"
+            let age = 30
+            print("{name} is {age} years old")
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
+    
+    #[test]
+    fn test_string_interpolation_undefined_variable() {
+        let mut parser = Parser::new(r#"
+            print("Hello {undefined}")
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_err());
+    }
+    
+    #[test]
+    fn test_string_without_interpolation() {
+        let mut parser = Parser::new(r#"
+            print("Just plain text")
+        "#);
+        let stmts = parser.parse().unwrap();
+        let mut interpreter = Interpreter::new();
+        assert!(interpreter.execute(stmts).is_ok());
+    }
 }

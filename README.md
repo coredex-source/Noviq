@@ -21,23 +21,10 @@ Noviq aims to be a compiled language instead of an interpreted language in the f
 Builder tool for interpreter version is called: Photon or Photon-NVQ
 The compiler will be called: Singularity or Singularity-NVQ
 
-First release of Noviq is expected to be Pre-alpha 1.0.0.
+First release of Noviq is expected to be Nebula-1.0.0 (Pre-alpha).
 
 ## Implementation:
-### Pre-aplha (Nebula):
-- Basic syntax including but not limited to variables, print, conditionals, etc.
-
-### Aplha (Protostar):
-- Including but not limited to everything that includes a basic workstack for a language like loops, functions, libs, a lot more.
-- Start building a simple compiler.
-
-### Beta (Nova):
-- More advanced features including OOP, etc.
-- Compiler should be able to build most of the code.
-
-### Release (Supernova):
-- A polished interpreted release of everything implemented before it.
-- A fully working compiler which will be polished in future builds.
+See features.md
 
 ## Building
 

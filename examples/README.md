@@ -18,12 +18,16 @@ cargo run -- examples/hello.nvq
 - `test.nvq` - Simple test file
 - `variables.nvq` - Variable declaration and usage
 - `quotes.nvq` - Single and double quote strings
+- `showcase.nvq` - Comprehensive feature demonstration
+- `interpolation_demo.nvq` - Complete interpolation demo
 
 ## Features Demonstrated
 
 - Comments (lines starting with `#`)
 - Print statements with `print()`
 - String literals (double and single quotes)
+- String interpolation with `{variable_name}` syntax
 - Variable declarations with `let`
 - Numbers (integers and floats)
 - Booleans (true/false)
+- Escaped braces in strings (`{{` and `}}`)
