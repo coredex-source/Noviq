@@ -8,7 +8,14 @@
    cargo build --release
    ```
 
-2. **Add to PATH (Optional but recommended)**:
+2. **Check System Requirements**:
+   ```bash
+   ./target/release/photon check
+   ```
+   
+   This verifies you have Rust, Cargo, Git, and other required tools installed.
+
+3. **Add to PATH (Optional but recommended)**:
    ```bash
    # Linux/macOS - Add to ~/.bashrc or ~/.zshrc
    export PATH="$PATH:/path/to/Noviq/photon/target/release"
@@ -63,8 +70,14 @@ photon install
 
 ## Troubleshooting
 
+### "System requirements not met"
+- Run `photon check` to see what's missing
+- Install Rust: https://rustup.rs/
+- Install Git: https://git-scm.com/downloads
+
 ### "cargo: command not found"
 - Install Rust: https://rustup.rs/
+- Make sure `~/.cargo/bin` is in your PATH
 
 ### "Failed to change to Noviq directory"
 - Make sure you're running Photon from the `photon/` directory

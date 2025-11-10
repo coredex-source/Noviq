@@ -7,6 +7,7 @@ Photon is a cross-platform build tool written in Rust that compiles the Noviq in
 ## Features
 
 - Fast & Reliable - Built in Rust for performance and safety
+- System Requirements Check - Automatically verifies Rust, Cargo, and Git
 - Multiple Build Profiles - Debug, Release, and Snapshot builds
 - Automatic Installation - Copy built binaries to `libs/` with proper naming
 - Clean Builds - Easy artifact cleanup
@@ -52,6 +53,9 @@ photon build snapshot
 ### Other Commands
 
 ```bash
+# Check system requirements
+photon check
+
 # Clean build artifacts
 photon clean
 
@@ -102,6 +106,10 @@ photon build snapshot
 ## Workflow Example
 
 ```bash
+# 0. Check system requirements first
+cd /path/to/Noviq/photon
+./target/release/photon check
+
 # 1. Make changes to Noviq source code
 cd /path/to/Noviq
 
@@ -132,8 +140,20 @@ Examples:
 
 ## Requirements
 
-- Rust toolchain (for building Photon)
-- Git (for snapshot builds with commit hash)
+Photon automatically checks for the following requirements before building:
+
+- **Rust 1.70.0+** - For compiling Noviq (checked automatically)
+- **Cargo** - Rust's package manager (comes with Rust)
+- **Git** - For snapshot builds with commit hash
+- **LLVM** (optional) - For future JIT support
+
+You can verify your system meets these requirements by running:
+
+```bash
+photon check
+```
+
+If any requirements are missing, Photon will provide installation links and instructions.
 
 ## Integration with Cargo Workspace
 

@@ -11,17 +11,20 @@ Transform Photon from a simple build script replacement into a comprehensive dev
 - Binary installation to libs/
 - Git integration for version tracking
 - Clean build artifacts
+- System requirements verification ✓
 
 ## Planned Features
 
 ### Phase 1: Enhanced Build System (v0.2.0)
 
 #### Dependency Management
-- **System Requirements Check**
+- **✓ System Requirements Check** (COMPLETED v0.1.1)
   - Verify Rust toolchain version
   - Check Git availability
   - Validate required system libraries
   - Display helpful error messages with installation links
+  - Automatic verification before builds
+  - Manual check via `photon check` command
 
 - **Build Caching**
   - Track source file changes

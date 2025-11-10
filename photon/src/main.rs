@@ -7,6 +7,8 @@ use std::path::Path;
 use std::process::{Command, exit};
 use std::fs;
 
+mod system_check;
+
 fn main() {
     print_banner();
     
@@ -26,6 +28,7 @@ fn main() {
         }
         "clean" => clean_build(),
         "install" => install_noviq(),
+        "check" => check_system(),
         "help" | "--help" | "-h" => print_help(),
         "version" | "--version" | "-v" => print_version(),
         _ => {
@@ -37,16 +40,21 @@ fn main() {
 }
 
 fn print_banner() {
+    let version = env!("CARGO_PKG_VERSION");
     println!("╔═══════════════════════════════════════╗");
     println!("║           Photon Build Tool           ║");
-    println!("║    Noviq Programming Language v0.1    ║");
+    println!("║   Noviq Programming Language v{}   ║", version);
     println!("╚═══════════════════════════════════════╝");
     println!();
 }
 
 fn print_version() {
-    println!("Photon v0.1.0");
-    println!("Build tool for Noviq Programming Language");
+    let version = env!("CARGO_PKG_VERSION");
+    let name = env!("CARGO_PKG_NAME");
+    let description = env!("CARGO_PKG_DESCRIPTION");
+    
+    println!("{} v{}", name.chars().next().unwrap().to_uppercase().to_string() + &name[1..], version);
+    println!("{}", description);
 }
 
 fn print_help() {
@@ -60,6 +68,7 @@ fn print_help() {
     println!();
     println!("    clean              Clean build artifacts");
     println!("    install            Install built binary to libs/");
+    println!("    check              Check system requirements");
     println!("    help               Show this help message");
     println!("    version            Show version information");
     println!();
@@ -69,6 +78,7 @@ fn print_help() {
     println!("    photon build snapshot     # Snapshot build with git hash");
     println!("    photon clean              # Clean build directory");
     println!("    photon install            # Install to libs/");
+    println!("    photon check              # Verify system requirements");
     println!();
     println!("BUILD PROFILES:");
     println!("    debug      - Unoptimized with debug symbols");
@@ -82,6 +92,13 @@ fn print_help() {
 }
 
 fn build_noviq(profile: &str) {
+    // First, verify system requirements
+    if !system_check::verify_system_requirements(false) {
+        println!();
+        system_check::verify_system_requirements(true);
+        exit(1);
+    }
+    
     println!("[*] Building Noviq ({} mode)...", profile);
     println!();
     
@@ -254,5 +271,45 @@ fn install_noviq() {
         println!("[SUCCESS] Successfully installed {} binary(ies) to libs/", installed);
     } else {
         println!("[WARN] No binaries installed. Build Noviq first with 'photon build'");
+    }
+}
+
+fn check_system() {
+    println!("[*] Verifying system requirements...");
+    println!();
+    
+    let results = system_check::run_all_checks();
+    let mut all_critical_passed = true;
+    
+    // Print results
+    for result in &results {
+        println!("    {}", result);
+        
+        // Only Rust, Cargo, and Git are critical
+        if !result.passed && result.name != "LLVM" {
+            all_critical_passed = false;
+        }
+    }
+    
+    println!();
+    
+    if all_critical_passed {
+        println!("[✓] All system requirements satisfied!");
+        println!("    You're ready to build Noviq!");
+    } else {
+        println!("[✗] Some critical requirements are missing!");
+        println!();
+        println!("Please install the missing components:");
+        
+        for result in &results {
+            if !result.passed && result.name != "LLVM" {
+                println!("  • {} - {}", result.name, result.message);
+            }
+        }
+        
+        println!();
+        println!("Quick Install Guide:");
+        println!("  Rust & Cargo: https://rustup.rs");
+        println!("  Git:          https://git-scm.com/downloads");
     }
 }
